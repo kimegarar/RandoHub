@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RandoHub - Calendario de Pruebas y Eventos</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+</head>
+<body>
+
+    <!-- Menú de navegación -->
+    <nav class="container">
+        <ul>
+            <li><strong>🚴‍♂️ RandoHub</strong></li>
+        </ul>
+        <ul>
+            <li><a href="{% url 'home' %}" class="secondary">Inicio</a></li>
+            <li><a href="#">Buscar Clubes</a></li>
+            <li><a href="{% url 'event_list' %}">Eventos</a></li>
+            <li><a href="#" role="button">Reclamar Perfil</a></li>
+        </ul>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="container">
+        <section>
+            <h2>📅 Calendario Completo de Pruebas</h2>
+            <p>Explora todos los brevets, permanentes y flechas registrados en la plataforma.</p>
+
+            <div class="grid">
+                {% for event in events %}
+                <article>
+                    <header>
+                        <mark>{{ event.get_event_type_display }}</mark>
+                        <h4 style="margin-top: 0.5rem;">{{ event.name }}</h4>
+                    </header>
+                    <p>📍 Lugar: <strong>{{ event.location }}</strong> ({{ event.country }})</p>
+                    <p>📏 Distancia: <strong>{{ event.distance_km }} km</strong></p>
+                    {% if event.elevation_gain %}
+                        <p>⛰️ Desnivel: <strong>{{ event.elevation_gain }} m</strong></p>
+                    {% else %}
+                        <p>⛰️ Desnivel: <em>No especificado</em></p>
+                    {% endif %}
+                    <p>📅 Fecha de salida: <strong>{{ event.start_date|date:"d/m/Y" }}</strong></p>
+                    <footer>
+                        Organiza: <strong>{{ event.organizing_club.name }}</strong>
+                    </footer>
+                </article>
+                {% empty %}
+                <p>No hay eventos registrados en este momento.</p>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+
+    <footer class="container" style="text-align: center; margin-top: 3rem; border-top: 1px solid #ccc; padding-top: 1rem;">
+        <small>© 2026 RandoHub. Proyecto académico de TFM.</small>
+    </footer>
+
+</body>
+</html>

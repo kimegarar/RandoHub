@@ -47,6 +47,28 @@ class Command(BaseCommand):
                 'location': 'Madrid'
             },
             {
+                'name': 'Brevet 400 de Madrid',
+                'slug': 'brm-400-madrid-2024',
+                'type': Event.EventType.BRM,
+                'club': cc_chamartin,
+                'year': 2024,
+                'date': datetime(2024, 5, 18).date(),
+                'distance': 400,
+                'elevation': 4500,
+                'location': 'Madrid'
+            },
+            {
+                'name': 'Brevet 600 de A Coruña',
+                'slug': 'brm-600-coruna-2024',
+                'type': Event.EventType.BRM,
+                'club': cc_riazor,
+                'year': 2024,
+                'date': datetime(2024, 6, 15).date(),
+                'distance': 600,
+                'elevation': 6800,
+                'location': 'A Coruña'
+            },
+            {
                 'name': 'Flecha Ibérica',
                 'slug': 'flecha-iberica-2024',
                 'type': Event.EventType.FLECHE,

@@ -1,18 +1,113 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>home</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RandoHub - Portal de Ciclismo Randonneur</title>
+    <!-- Cargamos Pico.css para tener un diseño moderno de forma automática -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
 </head>
 <body>
-    <h1>Bienvenido a RandoHub</h1>
-    <p>Esta es mi primera página en Django.</p>
-<h1>Mis Clubes</h1>
 
-<ul>
-  {% for club in clubs %}
-    <li>{{ club.name }}</li>
-  {% endfor %}
-</ul>
+    <!-- Cabecera de Navegación -->
+    <nav class="container">
+        <ul>
+            <li><strong>🚴‍♂️ RandoHub</strong></li>
+        </ul>
+        <ul>
+            <li><a href="{% url 'home' %}" class="secondary">Inicio</a></li>
+            <li><a href="#">Buscar Clubes</a></li>
+            <li><a href="{% url 'event_list' %}">Eventos</a></li>
+            <li><a href="#" role="button">Reclamar Perfil</a></li>
+        </ul>
+    </nav>
+
+    <!-- Sección Principal (Hero) -->
+    <main class="container">
+        <header class="headings">
+            <h1>El archivo vivo del ciclismo de larga distancia</h1>
+            <p>Centralizando la historia, los eventos y el palmarés del mundo randonneur de forma neutral y pública.</p>
+        </header>
+
+        <!-- Tarjetas de Estadísticas Reales de la Base de Datos -->
+        <div class="grid">
+            <article>
+                <header>📚 Clubes Registrados</header>
+                <h2 style="color: #209cee;">{{ total_clubs }}</h2>
+                <small>Clubes oficiales en España con código ACP</small>
+            </article>
+            <article>
+                <header>👥 Randonneurs Activos</header>
+                <h2 style="color: #209cee;">{{ total_randonneurs }}</h2>
+                <small>Ciclistas en la base de datos histórica</small>
+            </article>
+        </div>
+
+        <!-- Tabla de Eventos de la Base de Datos -->
+        <section>
+            <h3>📅 Próximos Eventos y Brevets</h3>
+            <figure>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Prueba</th>
+                            <th>Tipo</th>
+                            <th>Distancia</th>
+                            <th>Fecha</th>
+                            <th>Organizador</th>
+                            <th>Ubicación</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event in events %}
+                        <tr>
+                            <td><strong>{{ event.name }}</strong></td>
+                            <td><mark>{{ event.get_event_type_display }}</mark></td>
+                            <td>{{ event.distance_km }} km</td>
+                            <td>{{ event.start_date|date:"d/m/Y" }}</td>
+                            <td>{{ event.organizing_club.name }}</td>
+                            <td>{{ event.location }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" style="text-align: center;">No hay eventos registrados actualmente.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </figure>
+        </section>
+
+        <!-- ========================================================== -->
+        <!-- ⭐ NUEVA SECCIÓN DINÁMICA DE RANDONNEURS (AÑADIDA AQUÍ) ⭐ -->
+        <!-- ========================================================== -->
+        <section style="margin-top: 3rem;">
+            <h3>👥 Directorio de Randonneurs (Perfiles de prueba)</h3>
+            <p>Selecciona un ciclista para explorar su hoja de vida y sus reconocimientos calculados de forma dinámica.</p>
+            <div class="grid">
+                {% for r in randonneurs %}
+                <article>
+                    <header>
+                        <strong>{{ r.first_name }} {{ r.last_name }}</strong> [{{ r.country }}]
+                    </header>
+                    <p>Club: <strong>{{ r.club.name|default:"Independiente" }}</strong></p>
+                    <footer>
+                        <!-- Django busca el ID real del ciclista y genera su enlace dinámico -->
+                        <a href="{% url 'randonneur_detail' pk=r.pk %}" role="button" class="outline">Ver Perfil Deportivo</a>
+                    </footer>
+                </article>
+                {% empty %}
+                <p>No hay randonneurs registrados actualmente.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Pie de página -->
+    <footer class="container" style="text-align: center; margin-top: 3rem; border-top: 1px solid #ccc; padding-top: 1rem;">
+        <small>© 2026 RandoHub. Proyecto académico de TFM | Datos de carácter público e informativo.</small>
+    </footer>
+
 </body>
 </html>

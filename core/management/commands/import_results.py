@@ -25,6 +25,8 @@ class Command(BaseCommand):
             # Recuperamos los eventos
             brevet_200 = Event.objects.get(slug='brevet-200-coruna-2024')
             brevet_300 = Event.objects.get(slug='brm-300-madrid-2024')
+            brevet_400 = Event.objects.get(slug='brm-400-madrid-2024')
+            brevet_600 = Event.objects.get(slug='brm-600-coruna-2024')
             flecha = Event.objects.get(slug='flecha-iberica-2024')
 
         except (Randonneur.DoesNotExist, Event.DoesNotExist) as e:
@@ -49,6 +51,20 @@ class Command(BaseCommand):
                 'homologation': '123457'
             },
             {
+                'randonneur': pepe,
+                'event': brevet_400,
+                'status': Result.Status.FINISHER,
+                'time': timedelta(hours=22, minutes=15),  # Pepe tardó 22h 15m
+                'homologation': '123459'
+            },
+            {
+                'randonneur': pepe,
+                'event': brevet_600,
+                'status': Result.Status.FINISHER,
+                'time': timedelta(hours=37, minutes=45),  # Pepe tardó 37h 45m
+                'homologation': '123460'
+            },
+            {
                 'randonneur': laura,
                 'event': brevet_200,
                 'status': Result.Status.FINISHER,
@@ -57,7 +73,8 @@ class Command(BaseCommand):
             },
             {
                 'randonneur': laura,
-                'event': brevet_300,                    'status': Result.Status.DNF,  # Laura no pudo terminar el 300
+                'event': brevet_300,
+                'status': Result.Status.DNF,  # Laura no pudo terminar el 300
                 'time': None,
                 'homologation': None
             },

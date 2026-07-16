@@ -1,12 +1,13 @@
 from django.db import models
+from datetime import timedelta  #para poder manejar tiempos limites de los events
 from django.contrib.auth.models import User
 from django_countries.fields import CountryField
-from django.core.validators import MinValueValidator
 from django.utils.translation import gettext_lazy as _
 
 
 # 1. UTILIDADES (Mixins)
 # class abstracta, los modelos heredan de aqui ganan automáticamente los campos de auditoría
+#para cumplir a rajatabla el principio DRY (Don't Repeat Yourself)
 # y saber cuando se genero y actualizo; created y updated se añaden directametne a toda clase que herede de esta
 class TimeStampedModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created at"))
@@ -129,6 +130,29 @@ class Randonneur(TimeStampedModel):
         return f"<Randonneur id={self.id}: {self.first_name} {self.last_name}>"
 
 
+    def es_super_randonneur(self, ano):
+        """
+        Algoritmo inteligente para detectar si el ciclista ha completado
+        la serie completa (200, 300, 400 y 600 km) en un año específico.
+        """
+        # 1. Buscamos todos sus resultados exitosos en ese año
+        resultados_exitosos = self.results.filter(
+            event__year=ano,
+            status='FIN'  # Usamos el código de tu enum de Status (Finisher)
+        )
+
+        # 2. Extraemos las distancias únicas completadas (usando un conjunto/set para evitar duplicados)
+        distancias_completadas = set()
+        for r in resultados_exitosos:
+            distancias_completadas.add(r.event.distance_km)
+
+        # 3. Comprobamos si tiene al menos una de cada distancia requerida para el título
+        serie_requerida = {200, 300, 400, 600}
+
+        # El operador issubset comprueba si todas las distancias de la serie están en su historial
+        return serie_requerida.issubset(distancias_completadas)
+
+
 # 4. EVENTOS
 class Event(TimeStampedModel):
     class EventType(models.TextChoices):
@@ -166,6 +190,15 @@ class Event(TimeStampedModel):
     country = CountryField(verbose_name=_("Country"))
     official_link = models.URLField(blank=True)
 
+    #Campo opcional, sobrescribir límites estándar si es necesario, x las variaciones de eventos LRM
+    #(Al-Andalus son 200h no 180h estándar), es sistema de sobrescritura dinámica a nivel de bbdd
+    #mira si tiene el event tiempo límite personalizado, sino usa los tiempos estandar limite
+    max_time_override = models.DurationField(
+        null=True,
+        blank=True,
+        verbose_name=_("Custom Time Limit"),
+        help_text=_("Override standard limit if needed (e.g. for LRM Al-Andalus 200h) (HH:MM)")) #:SS no necesarios
+
     class Meta:
         ordering = ['-start_date']
         verbose_name = _("Event")
@@ -175,6 +208,52 @@ class Event(TimeStampedModel):
 
     def __repr__(self):
         return f"<Event id={self.id}: {self.slug}>"
+
+
+    def tiempo_maximo_permitido(self):
+        """
+        Calcula el tiempo límite oficial (ACP) para completar la prueba
+        según el tipo de evento y su distancia.
+        """
+        if self.max_time_override: #1 Si se define tiempo personalizado, se usa
+            return self.max_time_override
+
+        #si no, aplica los límites estándar oficiales de la normativa
+        if self.event_type == self.EventType.BRM:  #pruebas BRM
+            if self.distance_km == 200:
+                return timedelta(hours=13, minutes=30)
+            elif self.distance_km == 300:
+                return timedelta(hours=20, minutes=0)
+            elif self.distance_km == 400:
+                return timedelta(hours=27, minutes=0)
+            elif self.distance_km == 600:
+                return timedelta(hours=40, minutes=0)
+            elif self.distance_km == 1000:
+                return timedelta(hours=75, minutes=0)
+
+
+        elif self.event_type == self.EventType.LRM:  # events LRM
+            if self.distance_km == 1200:
+                return timedelta(hours=90, minutes=0)
+            elif self.distance_km == 1400:
+                return timedelta(hours=110, minutes=0)
+            elif self.distance_km == 1500:  # x ej: London-Edinburgh-London
+                return timedelta(hours=125, minutes=0)
+            elif self.distance_km == 2000: #OJO al andalus son 200h no 180
+                return timedelta(hours=200, minutes=0)
+            else: #velo. media mínima de 12 km/h para distancias de mas de 1200
+                horas_calculadas = int(self.distance_km / 12)
+                return timedelta(hours=horas_calculadas)#tolera si se crea otra prueba con otra distancia
+
+        #Super Randonnées Permanentes (600 km y +10.000m de desnivel)
+        elif self.event_type == self.EventType.SR600:
+            return timedelta(hours=60, minutes=0)  # Límite oficial fijo de 60h
+
+        #flechas
+        elif self.event_type == self.EventType.FLECHE:
+            return timedelta(hours=24, minutes=0)
+
+        return None  # Para otros eventos sin límite estricto
 
 
 # 5. RESULTADOS, TABLA PIVOTE: Conecta Randonneur <-> Event. Aquí se guarda los tiempos y homologaciones
@@ -193,7 +272,7 @@ class Result(TimeStampedModel):
 
     status = models.CharField(max_length=5, choices=Status.choices, default=Status.FINISHER)
     time = models.DurationField(null=True, blank=True, help_text="Tiempo total (HH:MM)")
-    homologation_code = models.CharField(max_length=50, blank=True, null=True)
+    homologation_code = models.CharField(max_length=50, blank=True, null=True, unique=True)
 
     class Meta:
         unique_together = ('randonneur', 'event')  # Un ciclista no puede tener 2 resultados en el mismo evento
@@ -205,6 +284,25 @@ class Result(TimeStampedModel):
 
     def __repr__(self):
         return f"<Result: {self.randonneur.last_name} in {self.event.id}>"
+
+
+    #Métdo save() personalizado para automatizar el estatus
+    def save(self, *args, **kwargs): # Si el resultado viene marcado como DNF o DNS, no valida tiempos
+        if self.status in [self.Status.DNF, self.Status.DNS]:
+            self.time = None
+            self.homologation_code = None
+            # Si se ingresa un tiempo, el sistema decide el estatus
+        elif self.time:
+            limite = self.event.tiempo_maximo_permitido()
+            if limite and self.time > limite:
+                self.status = self.Status.OT  # Over Time (Fuera de tiempo)
+                self.homologation_code = None  # No puede tener homologación
+            else:
+                self.status = self.Status.FINISHER  # Finisher dentro de tiempo
+
+        #y se guarda definitivamente en la bbdd
+        super().save(*args, **kwargs)
+
 
 
 # ACHIEVEMENTS (RECONOCIMIENTOS) #hay mas por poner

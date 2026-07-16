@@ -29,5 +29,7 @@ urlpatterns = [
     # views.home: "usa la función home del archivo views"
     # name='home': "nombre d esta ruta 'home' para referirse a ella luego"
 
-    path('', views.home, name='home'),
+    path('', views.home, name='home'), #ruta de portada
+    path('events/', views.event_list, name='event_list'), #los events o pruebas
+    path('randonneurs/<int:pk>/', views.randonneur_detail, name='randonneur_detail'),#RUTA DINÁMICA
 ]

@@ -1,0 +1,130 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RandoHub - Perfil de {{ randonneur.first_name }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+</head>
+<body>
+
+    <!-- Menú de navegación -->
+    <nav class="container">
+        <ul>
+            <li><strong>🚴‍♂️ RandoHub</strong></li>
+        </ul>
+        <ul>
+            <li><a href="{% url 'home' %}" class="secondary">Inicio</a></li>
+            <li><a href="#">Buscar Clubes</a></li>
+            <li><a href="{% url 'event_list' %}">Eventos</a></li>
+            <li><a href="#" role="button">Reclamar Perfil</a></li>
+        </ul>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="container">
+
+        <!-- Cabecera del Perfil -->
+        <hgroup>
+            <h1>{{ randonneur.first_name }} {{ randonneur.last_name }}</h1>
+            <h2>👤 Randonneur de {{ randonneur.get_country_display }} (Nacionalidad: {{ randonneur.country }})</h2>
+        </hgroup>
+
+        <!-- Información de Club y Reclamación -->
+        <article>
+            <div class="grid">
+                <div>
+                    <h5>🏢 Club Actual</h5>
+                    <p><strong>{{ randonneur.club.name }}</strong> ({{ randonneur.club.location }})</p>
+                </div>
+                <div style="text-align: right;">
+                    <h5>🔒 Estado del Perfil</h5>
+                    {% if randonneur.is_claimed %}
+                        <span style="color: #2ecc71; font-weight: bold;">✅ Perfil Reclamado</span>
+                    {% else %}
+                        <span style="color: #e67e22; font-weight: bold;">👤 Perfil Histórico (No reclamado)</span>
+                    {% endif %}
+                </div>
+            </div>
+        </article>
+
+        <!-- Reconocimientos Dinámicos Calculados -->
+        <section>
+            <h3>🏆 Distinciones y Reconocimientos</h3>
+            {% if es_sr_2024 %}
+                <article style="background-color: #d4edda; border-color: #c3e6cb; color: #155724;">
+                    <strong>🏅 Super Randonneur 2024</strong>
+                    <p style="margin-top: 0.5rem; margin-bottom: 0;">Felicidades, el sistema ha detectado de forma automática que has completado con éxito la serie de 200, 300, 400 y 600 km en el presente año natural.</p>
+                </article>
+            {% else %}
+                <p><em>Este ciclista no cuenta con reconocimientos calculados en el presente año.</em></p>
+            {% endif %}
+        </section>
+
+        <!-- Tabla de Resultados Personales (Historial) -->
+        <section>
+            <h3>📅 Historial de Participaciones y Brevets</h3>
+            <figure>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Prueba</th>
+                            <th>Tipo</th>
+                            <th>Distancia</th>
+                            <th>Fecha</th>
+                            <th>Tiempo Registrado</th>
+                            <th>Homologación</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Recorremos la relación inversa (results) gracias a Django -->
+                        {% for result in randonneur.results.all %}
+                        <tr>
+                            <td><strong>{{ result.event.name }}</strong></td>
+                            <td><mark>{{ result.event.get_event_type_display }}</mark></td>
+                            <td>{{ result.event.distance_km }} km</td>
+                            <td>{{ result.event.start_date|date:"d/m/Y" }}</td>
+                            <td>
+                                {% if result.time %}
+                                    {{ result.time }}
+                                {% else %}
+                                    -- : --
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if result.homologation_code %}
+                                    <code>{{ result.homologation_code }}</code>
+                                {% else %}
+                                    <em>Sin homologación</em>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if result.status == 'FIN' %}
+                                    <span style="color: #2ecc71; font-weight: bold;">Finisher</span>
+                                {% elif result.status == 'DNF' %}
+                                    <span style="color: #e74c3c; font-weight: bold;">Abandono (DNF)</span>
+                                {% else %}
+                                    <span style="color: #95a5a6;">{{ result.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" style="text-align: center;">Este ciclista no tiene resultados históricos cargados.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </figure>
+        </section>
+
+    </main>
+
+    <footer class="container" style="text-align: center; margin-top: 3rem; border-top: 1px solid #ccc; padding-top: 1rem;">
+        <small>© 2026 RandoHub. Datos obtenidos de fuentes públicas.</small>
+    </footer>
+
+</body>
+</html>
