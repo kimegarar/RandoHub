@@ -1,5 +1,7 @@
 import csv
-import os
+import os #para que el programa se comunique directamente con el sistema operativo del ordenador (os.path rutas de archivos)
+import re #Expresiones Regulares (RegEx), limpiar datos clubs, patrón: r'\s*\(\d+\)\s*$'... C. C. RIAZOR (10)
+#\s* busca espacios en blanco, \( y \) busca parentesis, \d+ para nºs dentro de (), $ solo si al final del txt,
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from core.models import Club, Organization
@@ -8,7 +10,7 @@ from core.models import Club, Organization
 class Command(BaseCommand):
     #La cadena de ayuda aparecerá si se ejecuta: python manage.py help import_clubs
     #help = 'Genera datos de prueba (Seed Data) iniciales para Organizaciones y Clubes.'
-    # #ERA PARA TEST CON DATOS INVENTAODS DE CLUBS
+    # ERA PARA TEST CON DATOS INVENTAODS DE CLUBS
     help = 'Importa la lista real de clubes de España desde el archivo CSV.'
 
     #Métdo principal que ejecuta Django al llamar al comando. Aquí esta toda la lógica del script.
@@ -84,20 +86,25 @@ class Command(BaseCommand):
 
             reader = csv.DictReader(file)
             for row in reader: # Limpiamos los textos de posibles espacios innecesarios
-                club_name = row['name'].strip()
+                raw_club_name = row['name'].strip() #nombre del club tal cual esta en cvs
+                #quita automáticamente cualquier paréntesis con números al final del nombre
+                club_name = re.sub(r'\s*\([\d-]+\)\s*$', '', raw_club_name)
                 club_location = row['location'].strip() if row['location'] else "Desconocida"
                 club_acp_code = row['acp_code'].strip() if row['acp_code'] else None
                 # Creamos cada club asociándolo a RanCat (org_es)
                 Club.objects.create(
-                    name=club_name,
+                    name=club_name,  #inserta el nombre ya limpio
                     location=club_location,
                     acp_club_code=club_acp_code,
                     is_organizer=False,  #OJO NO Todos clubes participan son organizadores
-                    country='ES',  # Definimos España como su pais
-                    organization=org_es  # Todos dependen de la organización RanCat que creamos arriba
+                    country='ES',  # Definimos España como su pais, OJO por cada pais se tendra que hacer esto??
+                    organization=org_es  #OJO NO Todos dependen de la organización RanCat que creamos arriba
                 )
                 clubs_creados += 1
 
         self.stdout.write(self.style.SUCCESS(
             f"¡Éxito total! Se han generado {clubs_creados} clubes reales en la base de datos a partir del CSV."
         ))
+
+
+#python manage.py import_clubs

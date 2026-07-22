@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RandoHub - Calendario de Pruebas y Eventos</title>
+    <title>RandoHub - Calendario de Eventos</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
 </head>
 <body>
@@ -23,6 +23,66 @@
 
     <!-- Contenido Principal -->
     <main class="container">
+
+        <!-- ========================================== -->
+        <!-- ⭐ FORMULARIO DE FILTROS DINÁMICOS (GET) ⭐ -->
+        <!-- ========================================== -->
+        <section>
+            <form method="GET" action="{% url 'event_list' %}" style="margin-bottom: 2rem;">
+                <div class="grid">
+
+                    <!-- Desplegable: Tipo de Evento -->
+                    <div>
+                        <label for="type">Tipo de Evento</label>
+                        <select name="type" id="type">
+                            <option value="">-- Todos los tipos --</option>
+                            <option value="BRM" {% if selected_type == 'BRM' %}selected{% endif %}>BRM (200-1000km)</option>
+                            <option value="LRM" {% if selected_type == 'LRM' %}selected{% endif %}>LRM (+1200km)</option>
+                            <option value="SR600" {% if selected_type == 'SR600' %}selected{% endif %}>Super Randonnée</option>
+                            <option value="FLECHE" {% if selected_type == 'FLECHE' %}selected{% endif %}>Flèche</option>
+                        </select>
+                    </div>
+
+                    <!-- Desplegable: Distancia -->
+                    <div>
+                        <label for="distance">Distancia</label>
+                        <select name="distance" id="distance">
+                            <option value="">-- Todas las distancias --</option>
+                            <option value="200" {% if selected_distance == '200' %}selected{% endif %}>200 km</option>
+                            <option value="300" {% if selected_distance == '300' %}selected{% endif %}>300 km</option>
+                            <option value="360" {% if selected_distance == '360' %}selected{% endif %}>360 km</option>
+                            <option value="400" {% if selected_distance == '400' %}selected{% endif %}>400 km</option>
+                            <option value="600" {% if selected_distance == '600' %}selected{% endif %}>600 km</option>
+                        </select>
+                    </div>
+
+                    <!-- Desplegable: Año de la Prueba -->
+                    <div>
+                        <label for="year">Año</label>
+                        <select name="year" id="year">
+                            <option value="">-- Todos los años --</option>
+                            <option value="2024" {% if selected_year == '2024' %}selected{% endif %}>2024</option>
+                            <option value="2025" {% if selected_year == '2025' %}selected{% endif %}>2025</option>
+                            <option value="2026" {% if selected_year == '2026' %}selected{% endif %}>2026</option>
+                        </select>
+                    </div>
+
+                    <!-- Botón de Filtrar -->
+                    <div style="display: flex; align-items: flex-end;">
+                        <button type="submit" style="width: 100%;">🔍 Filtrar</button>
+                    </div>
+                </div>
+
+                <!-- Botón de Limpiar filtros (solo se muestra si el usuario aplicó alguno) -->
+                {% if selected_type or selected_distance or selected_year %}
+                    <div style="text-align: right; margin-top: -1rem;">
+                        <a href="{% url 'event_list' %}" class="secondary"><small>❌ Limpiar filtros</small></a>
+                    </div>
+                {% endif %}
+            </form>
+        </section>
+
+        <!-- Calendario de Eventos en Tarjetas (Grid) -->
         <section>
             <h2>📅 Calendario Completo de Pruebas</h2>
             <p>Explora todos los brevets, permanentes y flechas registrados en la plataforma.</p>
@@ -47,14 +107,16 @@
                     </footer>
                 </article>
                 {% empty %}
-                <p>No hay eventos registrados en este momento.</p>
+                <article style="grid-column: 1 / -1; text-align: center;">
+                    <p><em>No hay pruebas registradas que coincidan con estos criterios de búsqueda.</em></p>
+                </article>
                 {% endfor %}
             </div>
         </section>
     </main>
 
     <footer class="container" style="text-align: center; margin-top: 3rem; border-top: 1px solid #ccc; padding-top: 1rem;">
-        <small>© 2026 RandoHub. Proyecto académico de TFM.</small>
+        <small>© 2026 RandoHub. Datos obtenidos de fuentes públicas.</small>
     </footer>
 
 </body>

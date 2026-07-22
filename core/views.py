@@ -7,6 +7,7 @@ from core.models import Club, Randonneur, Event
 #la def DEBE recibir el objeto 'request' (quién es, qué navegador usa, qué pide...)
 #nota: esta def Recibe el paquete de información (request) cuando alguien llama a la puerta.
 #Procesa, pasa los datos y Responde cn render y entrega el request para k Django sepa a quién enviar el HTML resultante
+
 def home(request): #request es variable local con info de las peticiones de user al visitar web
     # consulta a la Base de Datos (Query)
     #count() del ORM de Django, rápido y eficiente
@@ -33,10 +34,44 @@ def home(request): #request es variable local con info de las peticiones de user
     #render pide 3 la petición, el nombre del html, y opcional datos)
 
 
-def event_list(request): #gestionar la nueva página de eventos
+def event_list(request): #Vista pública para gestionar y mostrar el calendario de eventos.
+    #Captura los parámetros de búsqueda opcionales del navegador (GET) y filtra la base de datos.
     # Traemos todos los events de la bbdd
-    all_events = Event.objects.all()
-    return render(request, 'event_list.html', {'events': all_events})
+
+    #1. Consulta base: todos los eventos
+    events_query = Event.objects.all()   #!!! OJO VARIABLE events o all_events
+
+    #2. Capturamos los filtros que el usuario ha seleccionado en los desplegables de la web
+    query_type = request.GET.get('type') #tipo de prueba
+    query_distance = request.GET.get('distance') #de distnacia
+    query_year = request.GET.get('year') #fecha OJO no seria mejor MES y AÑO???
+
+    #filtros dinámicos al vuelo en el servidor si existen
+    if query_type:
+        events_query = events_query.filter(event_type=query_type)
+
+    if query_distance:
+        events_query = events_query.filter(distance_km=query_distance)
+
+    if query_year:
+        events_query = events_query.filter(year=query_year)
+
+    #Ejecutamos la consulta filtrada final
+    filtered_events = events_query
+
+    #Agrupamos el contexto y enviamos los "selected_..." para que el formulario
+    # mantenga seleccionada la opción seleccionada después de que la página se refresque.
+    context = {
+        'events': filtered_events,
+        'selected_type': query_type,
+        'selected_distance': query_distance,
+        'selected_year': query_year,
+    }
+
+
+
+    return render(request, 'event_list.html', context)
+
 
 
 def randonneur_detail(request, pk):
