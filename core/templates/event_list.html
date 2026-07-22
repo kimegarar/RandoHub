@@ -15,7 +15,7 @@
         </ul>
         <ul>
             <li><a href="{% url 'home' %}" class="secondary">Inicio</a></li>
-            <li><a href="#">Buscar Clubes</a></li>
+            <li><a href="{% url 'club_list' %}">Buscar Clubes</a></li>
             <li><a href="{% url 'event_list' %}">Eventos</a></li>
             <li><a href="#" role="button">Reclamar Perfil</a></li>
         </ul>
@@ -103,7 +103,14 @@
                     {% endif %}
                     <p>📅 Fecha de salida: <strong>{{ event.start_date|date:"d/m/Y" }}</strong></p>
                     <footer>
-                        Organiza: <strong>{{ event.organizing_club.name }}</strong>
+                        <!-- Enlazamos dinámicamente el ID del club para viajar a su ficha de Pico.css -->
+                        <!-- comprueba si el evento tiene club organizador antes de generar el enlace -->
+                        Organiza:
+                        {% if event.organizing_club %}
+                            <strong><a href="{% url 'club_detail' pk=event.organizing_club.pk %}">{{ event.organizing_club.name }}</a></strong>
+                        {% else %}
+                            <em>Independiente / No especificado</em>
+                        {% endif %}
                     </footer>
                 </article>
                 {% empty %}

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RandoHub - Clubes de {{ country_name }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <style>
+        .responsive-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="container">
+        <ul>
+            <li><strong>🚴‍♂️ RandoHub</strong></li>
+        </ul>
+        <ul>
+            <li><a href="{% url 'home' %}" class="secondary">Inicio</a></li>
+            <li><a href="{% url 'club_list' %}">Buscar Clubes</a></li>
+            <li><a href="{% url 'event_list' %}">Eventos</a></li>
+            <li><a href="#" role="button">Reclamar Perfil</a></li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        <hgroup>
+            <h1>Clubes en {{ country_name|upper }}</h1>
+            <p>Filtra los clubes por Comunidad Autónoma para encontrar delegaciones oficiales cerca de ti.</p>
+        </hgroup>
+
+        <!-- Buscador e interactividad por Región (Comunidad Autónoma) -->
+        <section>
+            <form method="GET" action="{% url 'club_region_list' country_code=country_code %}">
+                <div class="grid">
+                    <div>
+                        <label for="region">Filtrar por Región (Comunidad Autónoma)</label>
+                        <select name="region" id="region">
+                            <option value="">-- Todas las regiones --</option>
+                            {% for r in regiones %}
+                                <option value="{{ r.code }}" {% if selected_region == r.code %}selected{% endif %}>{{ r.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div style="display: flex; align-items: flex-end;">
+                        <button type="submit" style="width: 100%;">🔍 Filtrar Región</button>
+                    </div>
+                </div>
+                {% if selected_region %}
+                    <div style="text-align: right; margin-top: -1rem;">
+                        <a href="{% url 'club_region_list' country_code=country_code %}" class="secondary"><small>❌ Limpiar filtro de región</small></a>
+                    </div>
+                {% endif %}
+            </form>
+        </section>
+
+        <!-- Listado Responsivo de Clubes Filtrados -->
+        <section>
+            <h3>🏢 Resultados</h3>
+            <div class="responsive-grid">
+                {% for club in clubs %}
+                    <article style="margin-bottom: 0;">
+                        <header style="padding: 0.5rem 1rem;">
+                            <strong>{{ club.name }}</strong>
+                        </header>
+                        <p style="margin-bottom: 1rem; padding: 0 1rem;">
+                            <small>📍 {{ club.location }} ({{ club.get_region_display }})</small>
+                        </p>
+                        <footer style="padding: 0.5rem 1rem;">
+                            <a href="{% url 'club_detail' pk=club.pk %}" role="button" class="outline" style="width: 100%;">Ver Ficha del Club</a>
+                        </footer>
+                    </article>
+                {% empty %}
+                    <article style="grid-column: 1 / -1; text-align: center;">
+                        <p>No se han encontrado clubes registrados en esta región.</p>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+
+    <footer class="container" style="text-align: center; margin-top: 3rem; border-top: 1px solid #ccc; padding-top: 1rem;">
+        <small>© 2026 RandoHub. Proyecto académico de TFM.</small>
+    </footer>
+
+</body>
+</html>

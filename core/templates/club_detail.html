@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RandoHub - Club {{ club.name }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+</head>
+<body>
+
+    <!-- Menú de navegación -->
+    <nav class="container">
+        <ul>
+            <li><strong>🚴‍♂️ RandoHub</strong></li>
+        </ul>
+        <ul>
+            <li><a href="{% url 'home' %}" class="secondary">Inicio</a></li>
+            <li><a href="{% url 'club_list' %}">Buscar Clubes</a></li>
+            <li><a href="{% url 'event_list' %}">Eventos</a></li>
+            <li><a href="#" role="button">Reclamar Perfil</a></li>
+        </ul>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="container">
+        <hgroup>
+            <h1>{{ club.name }}</h1>
+            <h2>🏢 Club Randonneur Oficial (Código ACP: {{ club.acp_club_code|default:"Sin código oficial" }})</h2>
+        </hgroup>
+
+        <!-- Información y datos de contacto -->
+        <article>
+            <div class="grid">
+                <div>
+                    <h5>📍 Ubicación</h5>
+                    <p>Ubicación: <strong>{{ club.location }}</strong></p>
+                    <p>Comunidad Autónoma / Región: <strong>{{ club.get_region_display|default:club.region|upper }}</strong></p>
+                    <p>País: <strong>{{ club.get_country_display }}</strong></p>
+                </div>
+                <div>
+                    <h5>📞 Contacto y Enlaces</h5>
+                    {% if club.website %}
+                        <p>🌐 Sitio Web: <a href="{{ club.website }}" target="_blank">{{ club.website }}</a></p>
+                    {% else %}
+                        <p>🌐 Sitio Web: <em>No especificado</em></p>
+                    {% endif %}
+                    <p>📧 Correo de contacto: <a href="mailto:contacto@{{ club.acp_club_code|default:'randohub' }}.org">Enviar correo electrónico</a></p>
+                </div>
+            </div>
+        </article>
+
+        <!-- Estadística RGPD de Miembros -->
+        <section>
+            <h3>📊 Estadísticas del Club</h3>
+            <div class="grid">
+                <article style="text-align: center; border: 1px solid #ccc;">
+                    <header> Cantidad de Randonneurs </header>
+                    <h2 style="color: #209cee; margin-bottom: 0;">{{ total_miembros }}</h2>
+                    <p style="margin-top: 0.5rem; margin-bottom: 0;"><small style="color: #666;">💡 Datos agregados para dar cumplimiento con la normativa RGPD/GDPR de protección de datos personales.</small></p>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <footer class="container" style="text-align: center; margin-top: 3rem; border-top: 1px solid #ccc; padding-top: 1rem;">
+        <small>© 2026 RandoHub.</small>
+    </footer>
+
+</body>
+</html>

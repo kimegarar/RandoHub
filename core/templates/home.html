@@ -16,7 +16,7 @@
         </ul>
         <ul>
             <li><a href="{% url 'home' %}" class="secondary">Inicio</a></li>
-            <li><a href="#">Buscar Clubes</a></li>
+            <li><a href="{% url 'club_list' %}">Buscar Clubes</a></li>
             <li><a href="{% url 'event_list' %}">Eventos</a></li>
             <li><a href="#" role="button">Reclamar Perfil</a></li>
         </ul>
@@ -79,28 +79,9 @@
         </section>
 
         <!-- ========================================================== -->
-        <!-- ⭐ NUEVA SECCIÓN DINÁMICA DE RANDONNEURS (AÑADIDA AQUÍ) ⭐ -->
+        <!-- SECCIÓN DINÁMICA DE RANDONNEURS (AÑADIDA AQUÍ) -->
         <!-- ========================================================== -->
-        <section style="margin-top: 3rem;">
-            <h3>👥 Directorio de Randonneurs (Perfiles de prueba)</h3>
-            <p>Selecciona un ciclista para explorar su hoja de vida y sus reconocimientos calculados de forma dinámica.</p>
-            <div class="grid">
-                {% for r in randonneurs %}
-                <article>
-                    <header>
-                        <strong>{{ r.first_name }} {{ r.last_name }}</strong> [{{ r.country }}]
-                    </header>
-                    <p>Club: <strong>{{ r.club.name|default:"Independiente" }}</strong></p>
-                    <footer>
-                        <!-- Django busca el ID real del ciclista y genera su enlace dinámico -->
-                        <a href="{% url 'randonneur_detail' pk=r.pk %}" role="button" class="outline">Ver Perfil Deportivo</a>
-                    </footer>
-                </article>
-                {% empty %}
-                <p>No hay randonneurs registrados actualmente.</p>
-                {% endfor %}
-            </div>
-        </section>
+
 
     </main>
 

@@ -32,4 +32,8 @@ urlpatterns = [
     path('', views.home, name='home'), #ruta de portada
     path('events/', views.event_list, name='event_list'), #los events o pruebas
     path('randonneurs/<int:pk>/', views.randonneur_detail, name='randonneur_detail'),#RUTA DINÁMICA
+    path('clubs/<int:pk>/', views.club_detail, name='club_detail'), # RUTA DINÁMICA DE CLUB
+    path('clubs/', views.club_country_list, name='club_list'),  # Selector de Países
+    path('clubs/<str:country_code>/', views.club_region_list, name='club_region_list'), #Filtro por Región
 ]
+

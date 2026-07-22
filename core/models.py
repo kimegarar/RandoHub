@@ -40,6 +40,28 @@ class Organization(TimeStampedModel):
 
 # Clubs, 1:N (Uno a Muchos): Una Organización tiene muchos clubes.
 class Club(TimeStampedModel):
+
+    #DICt DE TRADUCCIÓN CC.AA.
+    class RegionChoices(models.TextChoices): #TextChoices de Django
+        ANDALUCIA = 'an', 'Andalucía'
+        ARAGON = 'ar', 'Aragón'
+        ASTURIAS = 'as', 'Asturias'
+        BALEARES = 'ba', 'Islas Baleares'
+        CANARIAS = 'cn', 'Canarias'
+        CANTABRIA = 'cb', 'Cantabria'
+        CASTILLA_LEON = 'cl', 'Castilla y León'
+        CASTILLA_MANCHA = 'cm', 'Castilla-La Mancha'
+        CATALUNA = 'ca', 'Cataluña'
+        VALENCIA = 'vl', 'Comunidad Valenciana'
+        EXTREMADURA = 'ex', 'Extremadura'
+        GALICIA = 'ga', 'Galicia'
+        MADRID = 'ma', 'Madrid'
+        MURCIA = 'mu', 'Región de Murcia'
+        NAVARRA = 'na', 'Navarra'
+        PAIS_VASCO = 'va', 'País Vasco'
+        LA_RIOJA = 'lo', 'La Rioja'
+
+
     name = models.CharField(max_length=100, verbose_name=_("Club Name"))
 
     # Sin unique=True global, pq puede haber 'CC Riazor' en dos países distintos (raro, pero posible)
@@ -53,8 +75,17 @@ class Club(TimeStampedModel):
         related_name='clubs',
         verbose_name=_("Affiliated Organization")
     )
-    location = models.CharField(max_length=150, verbose_name=_("Location"))
-    country = CountryField(verbose_name=_("Country"))
+    location = models.CharField(max_length=150, verbose_name=_("Location")) #ciudad-poblacion
+    #en plantilla HTML de ficha del club (club_detail.html),
+    #con la etiqueta especial d Django {{ club.get_region_display }}, Django leerá el código 'ga'
+    region = models.CharField(
+        max_length=100,
+        choices=RegionChoices.choices,  # aqui vincula las opciones ga > galicia, ...
+        blank=True,
+        null=True,
+        verbose_name=_("Region")
+    )
+    country = CountryField(verbose_name=_("Country")) #pais
 
     # MODIFICACIÓN: Añadido campo solicitado para saber si organiza pruebas
     is_organizer = models.BooleanField(default=False, verbose_name=_("Is Organizer?"))

@@ -90,3 +90,95 @@ def randonneur_detail(request, pk):
         'es_sr_2024': es_sr,
     }
     return render(request, 'randonneur_detail.html', context)
+
+
+def club_detail(request, pk):
+    """
+    def dinámica para mostrar la ficha de un club específico.
+    cuenta el total de miembros de un club respetando el estricto cumplimiento del RGPD.
+    """
+    club = get_object_or_404(Club, pk=pk)
+
+    #SOLUCIÓN RGPD: Contamos los miembros con .count() de forma agregada,
+    # SIN exponer nombres o perfiles individuales de forma pública sin consentimiento explícito.
+    total_miembros = club.randonneur_set.count()
+
+    context = {
+        'club': club,
+        'total_miembros': total_miembros,
+    }
+    return render(request, 'club_detail.html', context)
+
+
+def club_country_list(request):
+    """
+    Pantalla 1: Muestra un listado muy limpio de los países que tienen
+    clubes registrados en el sistema (de momento, España).
+    """
+    # Obtenemos los códigos únicos de países que tienen clubes activos en el sistema
+    #se duplicaban, con order_by() vacío antes de .distinct() elimina el ordenamiento por defecto del modelo (por nombre de club) en la consulta SQL
+    paises_codigos = Club.objects.filter(active=True).values_list('country', flat=True).order_by().distinct()
+
+    # Creamos una lista con el nombre legible y el código de cada país
+    countries = []
+    for codigo in paises_codigos:
+        # Django-countries nos traduce el código a su nombre legible (ej: 'ES' -> 'Spain')
+        # Para forzar la traducción a Español en tu TFM, podemos mapearlo o usar la traducción de Django.
+        nombre_pais = "España" if codigo == 'ES' else codigo
+        countries.append({
+            'code': codigo.lower(),  # Guardamos en minúsculas para las URLs
+            'name': nombre_pais
+        })
+
+    #Apunta al archivo real de tu carpeta de plantillas 'club_list.html'
+    return render(request, 'club_list.html', {'countries': countries})
+
+
+def club_region_list(request, country_code):
+    """
+    Pantalla 2: Muestra el directorio exclusivo de un país.
+    Permite filtrar los clubes dinámicamente por Región (Comunidad Autónoma) mediante un desplegable.
+    """
+    # Convertimos el código de la URL a mayúsculas (ej: 'es' -> 'ES') para buscar en la base de datos
+    country_upper = country_code.upper()
+
+    # Traemos los clubes de ese país específico
+    clubs = Club.objects.filter(country=country_upper, active=True).order_by('region', 'name')
+
+    # Obtenemos la lista "sucia" con duplicados desde la base de dato
+    regiones_brutas = Club.objects.filter(
+        country=country_upper,
+        active=True
+    ).exclude(region__isnull=True).values_list('region', flat=True)
+
+    regiones_unicas = set(regiones_brutas)
+
+    # Traducimos las regiones a sus nombres legibles para el desplegable
+    # (Leemos el diccionario RegionChoices que creamos en tu models.py)
+    regiones_traducidas = []
+    for r_code in regiones_unicas:
+        # Buscamos la etiqueta legible en tu enumeración de modelos
+        etiqueta = Club.RegionChoices(r_code).label if r_code in Club.RegionChoices.values else r_code
+        regiones_traducidas.append({'code': r_code, 'name': etiqueta})
+
+
+    regiones_traducidas.sort(key=lambda x: x['name']) #lista regiones ordenada alfabéticamente por nombre traducido
+
+    # Capturamos si el usuario ha seleccionado alguna región en el buscador (GET)
+    selected_region = request.GET.get('region')
+    if selected_region:
+        clubs = clubs.filter(region=selected_region)
+
+    context = {
+        'clubs': clubs,
+        'country_code': country_code,
+        'country_name': "España" if country_upper == 'ES' else country_upper,
+        'regiones': regiones_traducidas,
+        'selected_region': selected_region,
+    }
+
+    #Apunta a 'club_region_list.html' y pasamos el contexto correcto
+    return render(request, 'club_region_list.html', context)
+
+
+

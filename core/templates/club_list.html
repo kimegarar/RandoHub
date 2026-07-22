@@ -1,0 +1,87 @@
+<!-- es como el home de clubs -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RandoHub - Seleccionar País</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+
+    <!-- Evitamos la redirección compleja con JS simple: al cambiar de país en el buscador, viaja a su URL -->
+    <script>
+        function irAlPais(selectObject) {
+            var value = selectObject.value;
+            if (value) {
+                window.location.href = "/clubs/" + value + "/";
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <!-- Menú de navegación -->
+    <nav class="container">
+        <ul>
+            <li><strong>🚴‍♂️ RandoHub</strong></li>
+        </ul>
+        <ul>
+            <li><a href="{% url 'home' %}" class="secondary">Inicio</a></li>
+            <li><a href="{% url 'club_list' %}">Buscar Clubes</a></li>
+            <li><a href="{% url 'event_list' %}">Eventos</a></li>
+            <li><a href="#" role="button">Reclamar Perfil</a></li>
+        </ul>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="container">
+        <hgroup>
+            <h1>Buscar Clubes Randonneurs</h1>
+            <p>Selecciona tu país o comunidad autónoma para encontrar delegaciones oficiales randonneurs cerca de ti.</p>
+        </hgroup>
+
+        <!-- Buscador Interactivo de Países solicitado -->
+        <section>
+            <div class="grid" style="grid-template-columns: 2fr 1fr;">
+                <div>
+                    <label for="country-select">Seleccionar País de la Plataforma</label>
+                    <select id="country-select" onchange="irAlPais(this)">
+                        <option value="">-- Elige un país --</option>
+                        {% for country in countries %}
+                            <option value="{{ country.code }}">{{ country.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div style="display: flex; align-items: flex-end;">
+                    <p style="margin-bottom: 1rem;"><small style="color: #666;">💡 Selecciona el país para explorar sus regiones.</small></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tarjetas limpias de selección de país (Directorio de tarjetas) -->
+        <section>
+            <h3>🌍 Países Disponibles</h3>
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+                {% for country in countries %}
+                <article style="text-align: center; border: 2px solid #ccc; margin-bottom: 0;">
+                    <header style="padding: 1rem;">
+                        <span style="font-size: 3rem;">🌍</span>
+                    </header>
+                    <h3>{{ country.name|upper }}</h3>
+                    <p>Explorar clubes y asociaciones oficiales randonneurs en {{ country.name }}.</p>
+                    <footer style="padding: 1rem;">
+                        <a href="{% url 'club_region_list' country_code=country.code %}" role="button" style="width: 100%;">Explorar País</a>
+                    </footer>
+                </article>
+                {% empty %}
+                    <p>No hay países registrados con clubes activos en este momento.</p>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+
+    <footer class="container" style="text-align: center; margin-top: 3rem; border-top: 1px solid #ccc; padding-top: 1rem;">
+        <small>© 2026 RandoHub. Proyecto académico de TFM.</small>
+    </footer>
+
+</body>
+</html>
