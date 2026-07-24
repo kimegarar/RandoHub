@@ -7,7 +7,14 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
 </head>
 <body>
-
+    <style>
+        .responsive-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+    </style>
     <!-- Menú de navegación -->
     <nav class="container">
         <ul>
@@ -17,6 +24,7 @@
             <li><a href="{% url 'home' %}" class="secondary">Inicio</a></li>
             <li><a href="{% url 'club_list' %}">Buscar Clubes</a></li>
             <li><a href="{% url 'event_list' %}">Eventos</a></li>
+            <li><a href="{% url 'randonneur_list' %}">Buscar Ciclistas</a></li>
             <li><a href="{% url 'claim_profile' %}" role="button">Reclamar Perfil</a></li>
         </ul>
     </nav>
@@ -29,7 +37,7 @@
         <!-- ========================================== -->
         <section>
             <form method="GET" action="{% url 'event_list' %}" style="margin-bottom: 2rem;">
-                <div class="grid">
+                <div class="responsive-grid">
 
                     <!-- Desplegable: Tipo de Evento -->
                     <div>
@@ -87,7 +95,7 @@
             <h2>📅 Calendario Completo de Pruebas</h2>
             <p>Explora todos los brevets, permanentes y flechas registrados en la plataforma.</p>
 
-            <div class="grid">
+            <div class="responsive-grid">
                 {% for event in events %}
                 <article>
                     <header>

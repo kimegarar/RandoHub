@@ -18,6 +18,7 @@
             <li><a href="{% url 'home' %}" class="secondary">Inicio</a></li>
             <li><a href="{% url 'club_list' %}">Buscar Clubes</a></li>
             <li><a href="{% url 'event_list' %}">Eventos</a></li>
+            <li><a href="{% url 'randonneur_list' %}">Buscar Ciclistas</a></li>
             <li><a href="{% url 'claim_profile' %}" role="button">Reclamar Perfil</a></li>
         </ul>
     </nav>
@@ -27,7 +28,8 @@
 
         <!-- Cabecera del Perfil -->
         <hgroup>
-            <h1>{{ randonneur.first_name }} {{ randonneur.last_name }} ({{ randonneur.country }})</h1>
+            <!-- etiqueta .unicode_flag de django-countries renderiza el emoji de la bandera oficial (ej. 🇪🇸 o 🇬🇧) -->
+            <h1>{{ randonneur.first_name }} {{ randonneur.last_name }} {{ randonneur.country.unicode_flag }}</h1>
             <h2> Randonneur </h2>
         </hgroup>
 
@@ -120,7 +122,7 @@
                             <td>{{ result.event.start_date|date:"d/m/Y" }}</td>
                             <td>
                                 {% if result.time %}
-                                    {{ result.time }}
+                                    {{ result.formatted_time }}
                                 {% else %}
                                     -- : --
                                 {% endif %}

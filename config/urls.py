@@ -39,5 +39,6 @@ urlpatterns = [
     path('claim/', views.claim_profile, name='claim_profile'),  # buscador de reclamos de perfil
     path('claim/confirm/<int:pk>/', views.confirm_claim, name='confirm_claim'), #la acción de reclamar
     path('randonneurs/<int:pk>/edit/', views.edit_profile, name='edit_profile'),#ruta de edición de perfil
+    path('randonneurs/', views.randonneur_list, name='randonneur_list'), # RUTA DIRECTORIO DE CICLISTAS
 ]
 

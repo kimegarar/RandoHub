@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RandoHub - Directorio de Randonneurs</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <style>
+        .responsive-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Menú de navegación -->
+    <nav class="container">
+        <ul>
+            <li><strong>🚴‍♂️ RandoHub</strong></li>
+        </ul>
+        <ul>
+            <li><a href="{% url 'home' %}" class="secondary">Inicio</a></li>
+            <li><a href="{% url 'club_list' %}">Buscar Clubes</a></li>
+            <li><a href="{% url 'event_list' %}">Eventos</a></li>
+            <li><a href="{% url 'randonneur_list' %}">Buscar Ciclistas</a></li>
+        </ul>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="container">
+        <hgroup>
+            <h1>Buscar Randonneurs</h1>
+            <p>Explora la comunidad oficial de ciclistas federados e históricos de larga distancia.</p>
+        </hgroup>
+
+        <!-- Buscador Multifiltro Dinámico -->
+        <section>
+            <form method="GET" action="{% url 'randonneur_list' %}" style="margin-bottom: 2rem;">
+                <div class="grid">
+
+                    <!-- Filtro por Nombre o Apellidos -->
+                    <div>
+                        <label for="name">Nombre / Apellido</label>
+                        <input type="search" name="name" id="name" placeholder="Ej: Medina o Blanco" value="{{ selected_name }}">
+                    </div>
+
+                    <!-- Desplegable: País -->
+                    <div>
+                        <label for="country">País</label>
+                        <select name="country" id="country">
+                            <option value="">-- Todos los países --</option>
+                            {% for p in paises %}
+                                <option value="{{ p.code }}" {% if selected_country == p.code %}selected{% endif %}>{{ p.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Desplegable: Club -->
+                    <div>
+                        <label for="club">Club</label>
+                        <select name="club" id="club">
+                            <option value="">-- Todos los clubes --</option>
+                            {% for c in clubes %}
+                                <option value="{{ c.pk }}" {% if selected_club == c.pk|slugify %}selected{% endif %}>{{ c.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Botón de Filtrar -->
+                    <div style="display: flex; align-items: flex-end;">
+                        <button type="submit" style="width: 100%;">🔍 Filtrar</button>
+                    </div>
+                </div>
+
+                {% if selected_name or selected_country or selected_club %}
+                    <div style="text-align: right; margin-top: -1rem;">
+                        <a href="{% url 'randonneur_list' %}" class="secondary"><small>❌ Limpiar filtros</small></a>
+                    </div>
+                {% endif %}
+            </form>
+        </section>
+
+        <!-- Listado en Rejilla Responsiva de Ciclistas Públicos -->
+        <section>
+            <h3>👥 Randonneurs Registrados</h3>
+            <div class="responsive-grid">
+                {% for r in randonneurs %}
+                <article style="margin-bottom: 0;">
+                    <header style="padding: 0.5rem 1rem;">
+                        <strong>{{ r.first_name }} {{ r.last_name }} {{ r.country.unicode_flag }}</strong>
+                    </header>
+                    <p style="margin-bottom: 1rem; padding: 0 1rem;">
+                        <small>Club: <strong>{{ r.club.name|default:"Independiente" }}</strong></small>
+                    </p>
+                    <footer style="padding: 0.5rem 1rem;">
+                        <a href="{% url 'randonneur_detail' pk=r.pk %}" role="button" class="outline" style="width: 100%;">Ver Ficha Deportiva</a>
+                    </footer>
+                </article>
+                {% empty %}
+                <article style="grid-column: 1 / -1; text-align: center;">
+                    <p>No se han encontrado randonneurs registrados que coincidan con los criterios de búsqueda.</p>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+
+    <footer class="container" style="text-align: center; margin-top: 3rem; border-top: 1px solid #ccc; padding-top: 1rem;">
+        <small>© 2026 RandoHub. Datos deportivos seguros.</small>
+    </footer>
+
+</body>
+</html>

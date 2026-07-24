@@ -118,6 +118,20 @@ class Randonneur(TimeStampedModel):
     last_name = models.CharField(max_length=100, verbose_name=_("Last Name"))
     country = CountryField(verbose_name=_("Country"))
 
+    # MODIFICACIÓN: Opciones de género para análisis estadísticos
+    class GenderChoices(models.TextChoices):
+        MALE = 'M', _('Male')
+        FEMALE = 'F', _('Female')
+        OTHER = 'O', _('Other')
+
+    gender = models.CharField(
+        max_length=1,
+        choices=GenderChoices.choices,
+        blank=True,
+        null=True,
+        verbose_name=_("Gender")
+    )
+
     # datos de gestión (Privacidad y Login), is_claimed y privacy_level claves en GDPR/Privacidad
     # relación 1:1 con el sistema de usuarios de Django
     user = models.OneToOneField(
@@ -347,6 +361,18 @@ class Result(TimeStampedModel):
 
         #y se guarda definitivamente en la bbdd
         super().save(*args, **kwargs)
+
+    def formatted_time(self): #formateo de tiempo al final de tu modelo Result
+        """
+        Formatea el objeto timedelta en un formato legible HH:MM,
+        evitando que se muestre en dias y segundos (ej: '3 days, 2:29:00' pasa a '74:29').
+        """
+        if self.time:
+            total_segundos = int(self.time.total_seconds())
+            horas = total_segundos // 3600
+            minutos = (total_segundos % 3600) // 60
+            return f"{horas:02d}:{minutos:02d}"
+        return ""
 
 
 
