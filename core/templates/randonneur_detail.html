@@ -18,7 +18,7 @@
             <li><a href="{% url 'home' %}" class="secondary">Inicio</a></li>
             <li><a href="{% url 'club_list' %}">Buscar Clubes</a></li>
             <li><a href="{% url 'event_list' %}">Eventos</a></li>
-            <li><a href="#" role="button">Reclamar Perfil</a></li>
+            <li><a href="{% url 'claim_profile' %}" role="button">Reclamar Perfil</a></li>
         </ul>
     </nav>
 
@@ -27,28 +27,60 @@
 
         <!-- Cabecera del Perfil -->
         <hgroup>
-            <h1>{{ randonneur.first_name }} {{ randonneur.last_name }}</h1>
-            <h2>👤 Randonneur de {{ randonneur.get_country_display }} (Nacionalidad: {{ randonneur.country }})</h2>
+            <h1>{{ randonneur.first_name }} {{ randonneur.last_name }} ({{ randonneur.country }})</h1>
+            <h2> Randonneur </h2>
         </hgroup>
 
         <!-- Información de Club y Reclamación -->
         <article>
             <div class="grid">
                 <div>
-                    <h5>🏢 Club Actual</h5>
+                    <h5>🏢 Club </h5>
                     <p><strong>{{ randonneur.club.name }}</strong> ({{ randonneur.club.location }})</p>
                 </div>
                 <div style="text-align: right;">
                     <h5>🔒 Estado del Perfil</h5>
                     {% if randonneur.is_claimed %}
-                        <span style="color: #2ecc71; font-weight: bold;">✅ Perfil Reclamado</span>
+                        <span style="color: #2ecc71; font-weight: bold; display: block; margin-bottom: 0.5rem;">✅ Perfil Reclamado</span>
+
+                        <!-- CONTROL DE EDICIÓN: Solo el dueño real del perfil puede ver el botón de editar -->
+                        {% if request.user == randonneur.user %}
+                            <a href="{% url 'edit_profile' pk=randonneur.pk %}" class="button outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">⚙️ Editar Configuración</a>
+                        {% endif %}
+
                     {% else %}
-                        <span style="color: #e67e22; font-weight: bold;">👤 Perfil Histórico (No reclamado)</span>
+                        <span style="color: #e67e22; font-weight: bold;">👤 Perfil Histórico</span>
                     {% endif %}
+                </div>
                 </div>
             </div>
         </article>
+        <!-- ========================================== -->
+        <!-- ⭐ ENLACES Y REDES SOCIALES DINÁMICAS ⭐ -->
+        <!-- ========================================== -->
+        {% if randonneur.strava_link or randonneur.instagram_link or randonneur.other_link %}
+        <section style="margin-top: 2rem;">
+            <h3>🌐 Redes Sociales y Enlaces</h3>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem;">
 
+                {% if randonneur.strava_link %}
+                    <!-- Botón personalizado de Strava con su naranja oficial -->
+                    <a href="{{ randonneur.strava_link }}" target="_blank" role="button" class="outline" style="border-color: #fc4c02; color: #fc4c02;"> Strava</a>
+                {% endif %}
+
+                {% if randonneur.instagram_link %}
+                    <!-- Botón personalizado de Instagram con su rosa oficial -->
+                    <a href="{{ randonneur.instagram_link }}" target="_blank" role="button" class="outline" style="border-color: #e1306c; color: #e1306c;"> Instagram</a>
+                {% endif %}
+
+                {% if randonneur.other_link %}
+                    <!-- Botón para blog o web personal -->
+                    <a href="{{ randonneur.other_link }}" target="_blank" role="button" class="outline" style="border-color: #17a2b8; color: #17a2b8;">🔗 Web / Blog</a>
+                {% endif %}
+
+            </div>
+        </section>
+        {% endif %}
         <!-- Reconocimientos Dinámicos Calculados -->
         <section>
             <h3>🏆 Distinciones y Reconocimientos</h3>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RandoHub - Reclamar Perfil</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+</head>
+<body>
+
+    <nav class="container">
+        <ul>
+            <li><strong>🚴‍♂️ RandoHub</strong></li>
+        </ul>
+        <ul>
+            <li><a href="{% url 'home' %}" class="secondary">Inicio</a></li>
+            <li><a href="{% url 'club_list' %}">Buscar Clubes</a></li>
+            <li><a href="{% url 'event_list' %}">Eventos</a></li>
+            <li><a href="{% url 'claim_profile' %}">Reclamar Perfil</a></li>
+        </ul>
+    </nav>
+
+    <main class="container" style="max-width: 800px;">
+        <article>
+            <header>
+                <h2>🔍 Buscar e Vincular mi Historial Deportivo</h2>
+                <p>Escribe tu nombre o apellidos para buscar tu ficha histórica oficial y vincular tus brevets a tu nueva cuenta.</p>
+            </header>
+
+            <!-- Formulario de búsqueda -->
+            <form method="GET" action="{% url 'claim_profile' %}">
+                <div class="grid">
+                    <input type="search" name="q" id="q" placeholder="Ej: Medina Galan o Blanco Lopez" value="{{ query }}" required>
+                    <button type="submit">Buscar Perfil</button>
+                </div>
+            </form>
+
+            <!-- Resultados de búsqueda -->
+            {% if query %}
+                <h3>Resultados de la búsqueda para "{{ query }}"</h3>
+                {% if results %}
+                    <div class="grid" style="grid-template-columns: 1fr;">
+                        {% for r in results %}
+                            <article style="border: 1px solid #ccc; margin-bottom: 1rem; padding: 1rem;">
+                                <div class="grid" style="align-items: center;">
+                                    <div>
+                                        <strong>{{ r.first_name }} {{ r.last_name }}</strong> [{{ r.country }}]
+                                        <p style="margin-bottom: 0;"><small>Club registrado: {{ r.club.name|default:"Independiente" }}</small></p>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <!-- Botón dinámico de acción de reclamo -->
+                                        <a href="{% url 'confirm_claim' pk=r.pk %}" role="button" class="contrast">Este soy yo (Reclamar)</a>
+                                    </div>
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p><em>No se han encontrado fichas históricas no reclamadas que coincidan con la búsqueda.</em></p>
+                {% endif %}
+            {% endif %}
+        </article>
+    </main>
+
+    <footer class="container" style="text-align: center; margin-top: 3rem; border-top: 1px solid #ccc; padding-top: 1rem;">
+        <small>© 2026 RandoHub. Datos obtenidos de fuentes públicas.</small>
+    </footer>
+
+</body>
+</html>

@@ -184,7 +184,7 @@ class Randonneur(TimeStampedModel):
         return serie_requerida.issubset(distancias_completadas)
 
 
-# 4. EVENTOS
+# 4. EVENTOS/PRUEBAS DEPORTIVAS
 class Event(TimeStampedModel):
     class EventType(models.TextChoices):
         BRM = 'BRM', 'BRM (200-1000km)'
@@ -239,6 +239,20 @@ class Event(TimeStampedModel):
 
     def __repr__(self):
         return f"<Event id={self.id}: {self.slug}>"
+
+    #metodo para detectar si un club esta asociado a un event lo marque como club organizador
+    def save(self, *args, **kwargs):
+        """
+        se sobreescribe el guardado del evento para que, SI tiene un club organizador,
+        este se marque automáticamente como 'is_organizer=True' en la base de datos.
+        """
+        # 1. se guarda el evento de forma normal
+        super().save(*args, **kwargs)
+
+        # 2. Si tiene club organizador y no estaba marcado como organizador, lo marca
+        if self.organizing_club and not self.organizing_club.is_organizer:
+            self.organizing_club.is_organizer = True
+            self.organizing_club.save()  # Guardamos el cambio en el club
 
 
     def tiempo_maximo_permitido(self):

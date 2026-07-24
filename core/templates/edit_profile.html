@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RandoHub - Editar Perfil</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+</head>
+<body>
+
+    <nav class="container">
+        <ul>
+            <li><strong>🚴‍♂️ RandoHub</strong></li>
+        </ul>
+        <ul>
+            <li><a href="{% url 'home' %}" class="secondary">Inicio</a></li>
+            <li><a href="{% url 'club_list' %}">Buscar Clubes</a></li>
+            <li><a href="{% url 'event_list' %}">Eventos</a></li>
+            <li><a href="{% url 'claim_profile' %}">Reclamar Perfil</a></li>
+        </ul>
+    </nav>
+
+    <main class="container" style="max-width: 600px;">
+        <article>
+            <header>
+                <h2>⚙️ Configurar mi Perfil Deportivo</h2>
+                <p>Gestiona tu privacidad y añade tus redes sociales para conectar con otros randonneurs.</p>
+            </header>
+
+            <form method="POST" action="{% url 'edit_profile' pk=randonneur.pk %}">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" style="width: 100%;">💾 Guardar Cambios</button>
+            </form>
+
+            <footer>
+                <a href="{% url 'randonneur_detail' pk=randonneur.pk %}" class="secondary">Cancelar y volver al perfil</a>
+            </footer>
+        </article>
+    </main>
+
+    <footer class="container" style="text-align: center; margin-top: 3rem; border-top: 1px solid #ccc; padding-top: 1rem;">
+        <small>© 2026 RandoHub. Datos deportivos seguros.</small>
+    </footer>
+
+</body>
+</html>

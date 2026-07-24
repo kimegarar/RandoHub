@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RandoHub - Registro de Usuario</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+</head>
+<body>
+
+    <!-- Menú de navegación -->
+    <nav class="container">
+        <ul>
+            <li><strong>🚴‍♂️ RandoHub</strong></li>
+        </ul>
+        <ul>
+            <li><a href="{% url 'home' %}" class="secondary">Inicio</a></li>
+            <li><a href="{% url 'club_list' %}">Buscar Clubes</a></li>
+            <li><a href="{% url 'event_list' %}">Eventos</a></li>
+            <li><a href="{% url 'signup' %}" role="button">Registrarse</a></li>
+        </ul>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="container" style="max-width: 600px;">
+        <article>
+            <header>
+                <h2>📝 Crear Cuenta en RandoHub</h2>
+                <p>Regístrate para poder reclamar tu perfil histórico, unificar tus resultados y gestionar tu privacidad.</p>
+            </header>
+
+            <!-- Formulario seguro con token de protección contra ataques CSRF de Django -->
+            <form method="POST" action="{% url 'signup' %}">
+                {% csrf_token %}
+
+                <!-- Django se encarga de pintar todos los campos de contraseña segura y usuario de forma automática -->
+                {{ form.as_p }}
+
+                <button type="submit" style="width: 100%;">Crear mi Cuenta</button>
+            </form>
+
+            <footer>
+                <small>¿Ya tienes cuenta? <a href="#">Inicia sesión aquí</a></small>
+            </footer>
+        </article>
+    </main>
+
+    <footer class="container" style="text-align: center; margin-top: 3rem; border-top: 1px solid #ccc; padding-top: 1rem;">
+        <small>© 2026 RandoHub.</small>
+    </footer>
+
+</body>
+</html>

@@ -17,14 +17,20 @@
             <li><a href="{% url 'home' %}" class="secondary">Inicio</a></li>
             <li><a href="{% url 'club_list' %}">Buscar Clubes</a></li>
             <li><a href="{% url 'event_list' %}">Eventos</a></li>
-            <li><a href="#" role="button">Reclamar Perfil</a></li>
+            <li><a href="{% url 'claim_profile' %}" role="button">Reclamar Perfil</a></li>
         </ul>
     </nav>
 
     <!-- Contenido Principal -->
     <main class="container">
+        <!-- Cabecera de Club con distintivo dinámico según su rol de  si o no organizador -->
         <hgroup>
-            <h1>{{ club.name }}</h1>
+            <h1>
+                {{ club.name }}
+                {% if club.is_organizer %}
+                    <span style="font-size: 1.1rem; background-color: #e67e22; color: white; padding: 0.2rem 0.5rem; border-radius: 4px; vertical-align: middle; margin-left: 0.5rem;">⭐ Club Organizador</span>
+                {% endif %}
+            </h1>
             <h2>🏢 Club Randonneur Oficial (Código ACP: {{ club.acp_club_code|default:"Sin código oficial" }})</h2>
         </hgroup>
 

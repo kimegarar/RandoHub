@@ -24,7 +24,7 @@
             <li><a href="{% url 'home' %}" class="secondary">Inicio</a></li>
             <li><a href="{% url 'club_list' %}">Buscar Clubes</a></li>
             <li><a href="{% url 'event_list' %}">Eventos</a></li>
-            <li><a href="#" role="button">Reclamar Perfil</a></li>
+            <li><a href="{% url 'claim_profile' %}" role="button">Reclamar Perfil</a></li>
         </ul>
     </nav>
 
@@ -69,7 +69,14 @@
                             <strong>{{ club.name }}</strong>
                         </header>
                         <p style="margin-bottom: 1rem; padding: 0 1rem;">
-                            <small>📍 {{ club.location }} ({{ club.get_region_display }})</small>
+                            <small>
+                                📍
+                                <!-- filtro inteligente: Oculta 'unknown' o 'desconocida' si vienen del CSV -->
+                                {% if club.location and club.location.lower != 'unknown' and club.location.lower != 'desconocida' %}
+                                    {{ club.location }},
+                                {% endif %}
+                                {{ club.get_region_display }} ({{ club.country }})
+                            </small>
                         </p>
                         <footer style="padding: 0.5rem 1rem;">
                             <a href="{% url 'club_detail' pk=club.pk %}" role="button" class="outline" style="width: 100%;">Ver Ficha del Club</a>

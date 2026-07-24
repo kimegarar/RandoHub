@@ -35,5 +35,9 @@ urlpatterns = [
     path('clubs/<int:pk>/', views.club_detail, name='club_detail'), # RUTA DINÁMICA DE CLUB
     path('clubs/', views.club_country_list, name='club_list'),  # Selector de Países
     path('clubs/<str:country_code>/', views.club_region_list, name='club_region_list'), #Filtro por Región
+    path('signup/', views.signup, name='signup'),  # RUTA DE REGISTRO
+    path('claim/', views.claim_profile, name='claim_profile'),  # buscador de reclamos de perfil
+    path('claim/confirm/<int:pk>/', views.confirm_claim, name='confirm_claim'), #la acción de reclamar
+    path('randonneurs/<int:pk>/edit/', views.edit_profile, name='edit_profile'),#ruta de edición de perfil
 ]
 

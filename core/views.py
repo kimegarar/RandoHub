@@ -1,8 +1,17 @@
 #aqui la logica web, recibe peticiones user, busca datos de models, y se muestra
 # (en flask lo de abajo de @app.route(/'inicio')
 
+from django.contrib.auth.forms import UserCreationForm  #formulario de registro nativo y seguro de Django
+from django.contrib.auth import login  #para loguear al usuario automáticamente tras registrarse
+from django.shortcuts import redirect  #para redirigir de página
+
 from django.shortcuts import render, get_object_or_404
 from core.models import Club, Randonneur, Event
+
+from django.contrib.auth.decorators import login_required  # proteger la vista
+from django.db.models import Q  #para hacer búsquedas avanzadas OR (nombre o apellido)
+from core.forms import RandonneurProfileForm  #import del formulario privacidad rrss
+
 
 #la def DEBE recibir el objeto 'request' (quién es, qué navegador usa, qué pide...)
 #nota: esta def Recibe el paquete de información (request) cuando alguien llama a la puerta.
@@ -181,4 +190,84 @@ def club_region_list(request, country_code):
     return render(request, 'club_region_list.html', context)
 
 
+def signup(request):
+#gestionar el registro de nuevos usuarios en la plataforma
+    # Si el usuario ya está logueado, lo mandamos a la home
+    if request.user.is_authenticated:
+        return redirect('home')
 
+    if request.method == 'POST':
+        # Si el usuario envía el formulario con sus datos
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            # Guardamos el nuevo usuario de forma encriptada y segura en la base de datos
+            user = form.save()
+            # Lo logueamos automáticamente
+            login(request, user)
+            # Redirigimos a la portada de momento
+            return redirect('home')
+    else:
+        # Si entra por primera vez, le mostramos el formulario vacío
+        form = UserCreationForm()
+
+    return render(request, 'signup.html', {'form': form})
+
+
+@login_required
+def claim_profile(request):
+    """
+    Pantalla de búsqueda de perfiles históricos disponibles para reclamar.
+    Filtra mostrando solo perfiles de la base de datos que no hayan sido reclamados todavía.
+    """
+    query = request.GET.get('q', '').strip()
+    results = []
+
+    if query:
+        # Buscamos coincidencias en nombre o apellido, pero SOLO perfiles no reclamados aún (is_claimed=False)
+        results = Randonneur.objects.filter(
+            Q(first_name__icontains=query) | Q(last_name__icontains=query),
+            is_claimed=False
+        )
+
+    return render(request, 'claim_profile.html', {'results': results, 'query': query})
+
+
+@login_required
+def confirm_claim(request, pk):
+    """
+    Acción que ejecuta el enlace relacional entre el usuario logueado (User)
+    y el perfil histórico seleccionado (Randonneur), realizando el "PUM" relacional.
+    """
+    # Buscamos el perfil que se quiere reclamar. Debe estar libre (is_claimed=False)
+    randonneur = get_object_or_404(Randonneur, pk=pk, is_claimed=False)
+
+    # Realizamos la conexión relacional
+    randonneur.user = request.user
+    randonneur.is_claimed = True
+    randonneur.save()
+
+    # Redirigimos al usuario directamente a su nueva ficha de perfil dinámico
+    return redirect('randonneur_detail', pk=randonneur.pk)
+
+
+@login_required
+def edit_profile(request, pk):
+    """
+    Vista segura para editar los detalles de privacidad y enlaces del perfil.
+    Solo permite el acceso si el perfil pertenece al usuario logueado.
+    """
+    # BLINDAJE DE SEGURIDAD: Busca el perfil por su ID, pero obligatoriamente
+    # debe estar enlazado relacionalmente al usuario que hace la petición (user=request.user)
+    randonneur = get_object_or_404(Randonneur, pk=pk, user=request.user)
+
+    if request.method == 'POST':
+        # Pasamos los datos enviados por el usuario al formulario y lo vinculamos a su perfil existente
+        form = RandonneurProfileForm(request.POST, instance=randonneur)
+        if form.is_valid():
+            form.save() # Guardamos los cambios en la base de datos
+            return redirect('randonneur_detail', pk=randonneur.pk) #redirije a su perfil ya actualizado
+    else:
+        # Si entra por primera vez, cargamos el formulario relleno con sus datos actuales
+        form = RandonneurProfileForm(instance=randonneur)
+
+    return render(request, 'edit_profile.html', {'form': form, 'randonneur': randonneur})
