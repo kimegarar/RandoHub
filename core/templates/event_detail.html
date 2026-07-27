@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RandoHub - {{ event.name }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <style>
+        .responsive-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Menú de navegación -->
+    <nav class="container">
+        <ul>
+            <li><strong>🚴‍♂️ RandoHub</strong></li>
+        </ul>
+        <ul>
+            <li><a href="{% url 'home' %}" class="secondary">Inicio</a></li>
+            <li><a href="{% url 'club_list' %}">Buscar Clubes</a></li>
+            <li><a href="{% url 'event_list' %}">Pruebas Deportivas</a></li>
+            <li><a href="{% url 'randonneur_list' %}">Buscar Ciclistas</a></li>
+        </ul>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="container">
+
+        <!-- CABECERA DINÁMICA: Diferencia entre Serie Madre y Edición Concreta -->
+        {% if not event.parent_series %}
+            <!-- Vista de la Serie Madre / Histórica -->
+            <hgroup>
+                <h1>{{ event.name }}</h1>
+                <h2>🌍 Gran Evento Internacional LRM (Ultra Distancia)</h2>
+            </hgroup>
+
+            <article>
+                <h5>📍 Información General de la Serie</h5>
+                <p>Ubicación de referencia: <strong>{{ event.location }}</strong> ({{ event.country.unicode_flag }} {{ event.get_country_display }})</p>
+                <p>Distancia estándar: <strong>{{ event.distance_km }} km</strong></p>
+            </article>
+
+            <!-- Listado de Ediciones Asociadas -->
+            <section>
+                <h3>📅 Ediciones Históricas Registradas</h3>
+                <p>Selecciona una edición para explorar su listado de clasificaciones oficiales de finalizadores.</p>
+                <div class="responsive-grid">
+                    {% for edition in event.editions.all %}
+                        <article style="margin-bottom: 0;">
+                            <header style="padding: 0.5rem 1rem;">
+                                <strong>Edición {{ edition.year }}</strong>
+                            </header>
+                            <p style="margin-bottom: 1rem; padding: 0.5rem 1rem;">
+                                Fecha de salida: <strong>{{ edition.start_date|date:"d/m/Y" }}</strong><br>
+                                Distancia exacta: <strong>{{ edition.distance_km }} km</strong>
+                            </p>
+                            <footer style="padding: 0.5rem 1rem;">
+                                <a href="{% url 'event_detail' pk=edition.pk %}" role="button" class="outline" style="width: 100%;">Ver Resultados</a>
+                            </footer>
+                        </article>
+                    {% endfor %}
+                </div>
+            </section>
+
+        {% else %}
+            <!-- Vista de una Edición Concreta (Ej: LEL 1989) -->
+            <hgroup>
+                <h1>{{ event.name }}</h1>
+                <h2>📅 Edición Oficial del Año {{ event.year }}</h2>
+            </hgroup>
+
+            <article>
+                <div class="grid">
+                    <div>
+                        <h5>📍 Datos de la Edición</h5>
+                        <p>Fecha de salida: <strong>{{ event.start_date|date:"d/m/Y" }}</strong></p>
+                        <p>Distancia oficial: <strong>{{ event.distance_km }} km</strong></p>
+                    </div>
+                    <div style="text-align: right;">
+                        <h5>🔗 Serie Madre</h5>
+                        <p>Este evento pertenece a la serie:</p>
+                        <a href="{% url 'event_detail' pk=event.parent_series.pk %}" role="button" class="contrast">Ver Serie Completa</a>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Clasificación de Finishers de esta Edición -->
+            <section>
+                <h3>🏆 Resultados Oficiales (Finishers)</h3>
+                <figure>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Randonneur</th>
+                                <th>País</th>
+                                <th>Tiempo Registrado</th>
+                                <th>Homologación</th>
+                                <th>Estatus</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for result in results %}
+                            <tr>
+                                <td>
+                                    <!-- Enlazamos al perfil dinámico del ciclista -->
+                                    <strong><a href="{% url 'randonneur_detail' pk=result.randonneur.pk %}">{{ result.randonneur.first_name }} {{ result.randonneur.last_name }}</a></strong>
+                                </td>
+                                <td>{{ result.randonneur.country.unicode_flag }} {{ result.randonneur.get_country_display }}</td>
+                                <td>{{ result.formatted_time }}</td>
+                                <td><code>{{ result.homologation_code }}</code></td>
+                                <td><span style="color: #2ecc71; font-weight: bold;">Finisher</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" style="text-align: center;">No hay resultados registrados para esta edición.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </figure>
+            </section>
+        {% endif %}
+
+    </main>
+
+    <footer class="container" style="text-align: center; margin-top: 3rem; border-top: 1px solid #ccc; padding-top: 1rem;">
+        <small>© 2026 RandoHub. Datos obtenidos de fuentes oficiales LRM.</small>
+    </footer>
+
+</body>
+</html>

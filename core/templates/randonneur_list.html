@@ -24,7 +24,7 @@
         <ul>
             <li><a href="{% url 'home' %}" class="secondary">Inicio</a></li>
             <li><a href="{% url 'club_list' %}">Buscar Clubes</a></li>
-            <li><a href="{% url 'event_list' %}">Eventos</a></li>
+            <li><a href="{% url 'event_list' %}">Pruebas Deportivas</a></li>
             <li><a href="{% url 'randonneur_list' %}">Buscar Ciclistas</a></li>
         </ul>
     </nav>
@@ -85,12 +85,13 @@
 
         <!-- Listado en Rejilla Responsiva de Ciclistas Públicos -->
         <section>
-            <h3>👥 Randonneurs Registrados</h3>
+            <h3>Randonneurs Registrados</h3>
             <div class="responsive-grid">
                 {% for r in randonneurs %}
                 <article style="margin-bottom: 0;">
                     <header style="padding: 0.5rem 1rem;">
-                        <strong>{{ r.first_name }} {{ r.last_name }} {{ r.country.unicode_flag }}</strong>
+                        <!-- Usamos la nueva propiedad segura de Python para evitar cualquier caida -->
+                        <strong>{{ r.first_name }} {{ r.last_name }} {{ r.safe_unicode_flag }}</strong>
                     </header>
                     <p style="margin-bottom: 1rem; padding: 0 1rem;">
                         <small>Club: <strong>{{ r.club.name|default:"Independiente" }}</strong></small>

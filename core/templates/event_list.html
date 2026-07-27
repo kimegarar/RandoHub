@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RandoHub - Calendario de Eventos</title>
+    <title>RandoHub - Calendario de Pruebas Deportivas</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
-</head>
-<body>
     <style>
         .responsive-grid {
             display: grid;
@@ -15,6 +13,9 @@
             margin-bottom: 2rem;
         }
     </style>
+</head>
+<body>
+
     <!-- Menú de navegación -->
     <nav class="container">
         <ul>
@@ -23,7 +24,7 @@
         <ul>
             <li><a href="{% url 'home' %}" class="secondary">Inicio</a></li>
             <li><a href="{% url 'club_list' %}">Buscar Clubes</a></li>
-            <li><a href="{% url 'event_list' %}">Eventos</a></li>
+            <li><a href="{% url 'event_list' %}">Pruebas Deportivas</a></li>
             <li><a href="{% url 'randonneur_list' %}">Buscar Ciclistas</a></li>
             <li><a href="{% url 'claim_profile' %}" role="button">Reclamar Perfil</a></li>
         </ul>
@@ -32,9 +33,7 @@
     <!-- Contenido Principal -->
     <main class="container">
 
-        <!-- ========================================== -->
-        <!-- ⭐ FORMULARIO DE FILTROS DINÁMICOS (GET) ⭐ -->
-        <!-- ========================================== -->
+        <!-- Formulario de Búsqueda y Filtros Dinámicos -->
         <section>
             <form method="GET" action="{% url 'event_list' %}" style="margin-bottom: 2rem;">
                 <div class="responsive-grid">
@@ -75,14 +74,25 @@
                         </select>
                     </div>
 
+                    <!-- Desplegable: País (Añadido) -->
+                    <div>
+                        <label for="country">País</label>
+                        <select name="country" id="country">
+                            <option value="">-- Todos los países --</option>
+                            {% for p in paises %}
+                                <option value="{{ p.code }}" {% if selected_country == p.code %}selected{% endif %}>{{ p.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
                     <!-- Botón de Filtrar -->
                     <div style="display: flex; align-items: flex-end;">
                         <button type="submit" style="width: 100%;">🔍 Filtrar</button>
                     </div>
                 </div>
 
-                <!-- Botón de Limpiar filtros (solo se muestra si el usuario aplicó alguno) -->
-                {% if selected_type or selected_distance or selected_year %}
+                <!-- Botón de Limpiar filtros -->
+                {% if selected_type or selected_distance or selected_year or selected_country %}
                     <div style="text-align: right; margin-top: -1rem;">
                         <a href="{% url 'event_list' %}" class="secondary"><small>❌ Limpiar filtros</small></a>
                     </div>
@@ -100,7 +110,7 @@
                 <article>
                     <header>
                         <mark>{{ event.get_event_type_display }}</mark>
-                        <h4 style="margin-top: 0.5rem;">{{ event.name }}</h4>
+                        <h4 style="margin-top: 0.5rem;"><a href="{% url 'event_detail' pk=event.pk %}">{{ event.name }}</a></h4>
                     </header>
                     <p>📍 Lugar: <strong>{{ event.location }}</strong> ({{ event.country }})</p>
                     <p>📏 Distancia: <strong>{{ event.distance_km }} km</strong></p>
@@ -111,8 +121,6 @@
                     {% endif %}
                     <p>📅 Fecha de salida: <strong>{{ event.start_date|date:"d/m/Y" }}</strong></p>
                     <footer>
-                        <!-- Enlazamos dinámicamente el ID del club para viajar a su ficha de Pico.css -->
-                        <!-- comprueba si el evento tiene club organizador antes de generar el enlace -->
                         Organiza:
                         {% if event.organizing_club %}
                             <strong><a href="{% url 'club_detail' pk=event.organizing_club.pk %}">{{ event.organizing_club.name }}</a></strong>

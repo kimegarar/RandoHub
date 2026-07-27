@@ -17,10 +17,10 @@ class Command(BaseCommand):
 
         # 2. RECUPERAR CICLISTAS Y EVENTOS EXISTENTES
         try:
-            # Recuperamos los ciclistas
-            pepe = Randonneur.objects.get(first_name='Pepe', last_name='Rodríguez')
-            laura = Randonneur.objects.get(first_name='Laura', last_name='García')
-            john = Randonneur.objects.get(first_name='John', last_name='Smith')
+            # Se recuperan los ciclistas de control usando la grafia normalizada en mayusculas y sin tildes
+            pepe = Randonneur.objects.get(first_name='PEPE', last_name='RODRIGUEZ')
+            laura = Randonneur.objects.get(first_name='LAURA', last_name='GARCIA')
+            john = Randonneur.objects.get(first_name='JOHN', last_name='SMITH')
 
             # Recuperamos los eventos
             brevet_200 = Event.objects.get(slug='brevet-200-coruna-2024')

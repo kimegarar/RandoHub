@@ -41,45 +41,65 @@ def home(request):
 def event_list(request):
     """
     Vista publica para gestionar y mostrar el calendario de eventos.
-    Captura los parametros de busqueda opcionales de la URL y filtra la base de datos.
+    Captura los parametros de busqueda opcionales del navegador y filtra dinamicamente la base de datos.
     """
-    events_query = Event.objects.all()
+    # 1. Consulta base de inicio: preparamos el plano filtrando solo las series principales
+    events_query = Event.objects.filter(parent_series__isnull=True)
 
+    # 2. Capturamos los filtros del formulario HTML (Añadido el filtro de pais)
     query_type = request.GET.get('type')
     query_distance = request.GET.get('distance')
     query_year = request.GET.get('year')
+    query_country = request.GET.get('country')
 
+    # 3. Modificamos el plano de la consulta dinámicamente según la selección del usuario
     if query_type:
         events_query = events_query.filter(event_type=query_type)
-
     if query_distance:
         events_query = events_query.filter(distance_km=query_distance)
-
     if query_year:
         events_query = events_query.filter(year=query_year)
+    if query_country:
+        events_query = events_query.filter(country=query_country.upper())
 
-    filtered_events = events_query
+    # Obtenemos los paises unicos de las series principales para el desplegable del buscador
+    paises_disponibles = Event.objects.filter(
+        parent_series__isnull=True
+    ).values_list('country', flat=True).order_by().distinct()
+
+    paises_traducidos = []
+    for p_code in paises_disponibles:
+        nombre_pais = "España" if p_code == 'ES' else p_code
+        paises_traducidos.append({'code': p_code, 'name': nombre_pais})
 
     context = {
-        'events': filtered_events,
+        'events': events_query,
+        'paises': paises_traducidos,
         'selected_type': query_type,
         'selected_distance': query_distance,
         'selected_year': query_year,
+        'selected_country': query_country,
     }
+
     return render(request, 'event_list.html', context)
 
 
 def randonneur_detail(request, pk):
     """
     Vista dinamica para mostrar el perfil deportivo de un ciclista especifico.
-    Usa el parametro 'pk' de la URL.
+    Sincroniza y calcula los reconocimientos reales en la base de datos antes de renderizar.
     """
     randonneur = get_object_or_404(Randonneur, pk=pk)
-    es_sr = randonneur.es_super_randonneur(2024)
+
+    # SINCRONIZACIÓN AUTOMÁTICA: Calculamos y guardamos fisicamente los logros del ciclista
+    randonneur.sincronizar_logros()
+
+    # RECUPERACIÓN AGRUPADA: Obtenemos los logros estructurados como 'Tipo (Cantidad: Anos)'
+    logros_agrupados = randonneur.obtener_logros_agrupados()
 
     context = {
         'randonneur': randonneur,
-        'es_sr_2024': es_sr,
+        'logros_agrupados': logros_agrupados,  # Enviamos el diccionario a la plantilla
     }
     return render(request, 'randonneur_detail.html', context)
 
@@ -264,3 +284,22 @@ def randonneur_list(request):
         'selected_club': query_club,
     }
     return render(request, 'randonneur_list.html', context)
+
+
+def event_detail(request, pk):
+    """
+    Vista dinamica para mostrar la ficha de un evento o serie.
+    Si es una serie madre, muestra sus ediciones historicas asociadas.
+    Si es una edicion concreta, recupera sus resultados y los ciclistas finisher.
+    """
+    event = get_object_or_404(Event, pk=pk)
+
+    # Se obtienen los resultados asociados a esta edicion de forma relacional
+    # Solo aplica si es una edicion concreta (tiene serie madre)
+    results = event.results.all().order_by('time') if event.parent_series else []
+
+    context = {
+        'event': event,
+        'results': results,
+    }
+    return render(request, 'event_detail.html', context)

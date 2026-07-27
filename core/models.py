@@ -197,6 +197,135 @@ class Randonneur(TimeStampedModel):
         # El operador issubset comprueba si todas las distancias de la serie están en su historial
         return serie_requerida.issubset(distancias_completadas)
 
+    def es_elegible_challenge_lepertel(self):
+        """
+        para determinar si el ciclista califica para el Challenge Lepertel.
+        Comprueba si se han finalizado pruebas de 1200 km o mas dsd el ano 2019 inclusive,
+        durante cuatro anos naturales consecutivos, en al menos dos paises distintos.
+        """
+        # Se obtienen todos los resultados exitosos en pruebas de 1200 km o mas dsd el ano 2019
+        # ordenados cronologicamente por la fecha de salida del evento
+        resultados_ultra = self.results.filter(
+            status='FIN',
+            event__distance_km__gte=1200,
+            event__year__gte=2019  # Constriccion de año: dsd 2019 inclusive
+        ).order_by('event__start_date')
+
+        if not resultados_ultra.exists():
+            return False
+
+        # Se asocia cada ano con el conjunto de paises de sus eventos de ultra distancia
+        paises_por_ano = {}
+        for r in resultados_ultra:
+            ano = r.event.year
+            pais = str(r.event.country)
+            if ano not in paises_por_ano:
+                paises_por_ano[ano] = set()
+            paises_por_ano[ano].add(pais)
+
+        # Se obtienen los anos unicos ordenados
+        anos_ordenados = sorted(paises_por_ano.keys())
+
+        # Se busca si existe al menos una secuencia de 4 anos consecutivos dsd 2019
+        for i in range(len(anos_ordenados) - 3):
+            secuencia = anos_ordenados[i:i + 4]
+
+            # Se comprueba si la secuencia es estrictamente consecutiva (ej: 2021, 2022, 2023, 2024)
+            es_consecutiva = (
+                    secuencia[1] == secuencia[0] + 1 and
+                    secuencia[2] == secuencia[1] + 1 and
+                    secuencia[3] == secuencia[2] + 1
+            )
+
+            if es_consecutiva:
+                # Se unifican los paises de participacion de estos 4 anos especificos
+                paises_secuencia = set()
+                for ano in secuencia:
+                    paises_secuencia.update(paises_por_ano[ano])
+
+                # Si hay participacion en al menos dos naciones distintas, califica
+                if len(paises_secuencia) >= 2:
+                    return True
+
+        return False
+
+    @property
+    def safe_unicode_flag(self):
+        """
+        Retorna el emoji de la bandera de forma segura.
+        Evita caidas del sistema si el codigo de pais esta vacio o es invalido.
+        """
+        # Se comprueba si el pais tiene un codigo de exactamente dos letras
+        if self.country and hasattr(self.country, 'code') and len(self.country.code) == 2:
+            try:
+                # Se intenta retornar el emoji de la bandera de la libreria
+                return self.country.unicode_flag
+            except (IndexError, ValueError):
+                # Si la libreria falla por un codigo corrupto, se retorna vacio de forma segura
+                return ""
+        return ""
+
+
+    def sincronizar_logros(self):
+        """
+        Analiza los resultados del ciclista de forma automatica, calcula sus
+        reconocimientos y los guarda fisicamente en la tabla de Achievement
+        evitando duplicidades en la base de datos.
+        """
+        # 1. Sincronizacion de Super Randonneur (SR) por cada ano
+        # Se analizan los ultimos anos para verificar si califica
+        for ano in range(2018, 2027):
+            if self.es_super_randonneur(ano):
+                # Se importa el modelo aqui dentro para evitar problemas de importacion circular
+                from core.models import Achievement
+                Achievement.objects.get_or_create(
+                    randonneur=self,
+                    year=ano,
+                    kind=Achievement.Type.SR
+                )
+
+        # 2. Sincronizacion de Challenge Lepertel
+        # Si califica para el Challenge Lepertel, se registra el logro en el ultimo ano
+        # de participacion ultra del ciclista
+        if self.es_elegible_challenge_lepertel():
+            from core.models import Achievement
+            ultimo_resultado = self.results.filter(
+                status='FIN',
+                event__distance_km__gte=1200,
+                event__year__gte=2019
+            ).order_by('-event__start_date').first()
+
+            if ultimo_resultado:
+                Achievement.objects.get_or_create(
+                    randonneur=self,
+                    year=ultimo_resultado.event.year,
+                    kind=Achievement.Type.LEPERTEL
+                )
+
+    def obtener_logros_agrupados(self):
+        """
+        Recupera los reconocimientos de la base de datos y los agrupa
+        en formato de texto limpio: 'Tipo (Cantidad: Ano1, Ano2...)'.
+        """
+        logros = self.achievements.all().order_by('kind', 'year')
+        agrupados = {}
+
+        # Se agrupan los anos por cada tipo de logro
+        for logro in logros:
+            tipo_legible = logro.get_kind_display()
+            if tipo_legible not in agrupados:
+                agrupados[tipo_legible] = []
+            agrupados[tipo_legible].append(str(logro.year))
+
+        # Se formatea el resultado final para la plantilla HTML
+        resultado_formateado = {}
+        for tipo, anos in agrupados.items():
+            resultado_formateado[tipo] = f"({len(anos)}: {', '.join(anos)})"
+
+        return resultado_formateado
+
+
+
 
 # 4. EVENTOS/PRUEBAS DEPORTIVAS
 class Event(TimeStampedModel):
@@ -214,6 +343,17 @@ class Event(TimeStampedModel):
     #título de algo convertido a un formato para la barra navegador (tod minus, espacios -, )
     slug = models.SlugField(unique=True, help_text=_("URL friendly name, ej: madrid-gijon-2026"))
     event_type = models.CharField(max_length=10, choices=EventType.choices, default=EventType.BRM)
+    # MODIFICACIÓN: Relación autorreferencial para unificar ediciones bajo una misma serie madre
+    # Si es una edición (ej. LEL 1989), apunta al evento maestro (ej. London-Edinburgh-London)
+    parent_series = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='editions',
+        verbose_name=_("Parent Series"),
+        help_text=_("Override standard limit if needed")
+    )
 
     organizing_club = models.ForeignKey(
         Club,
@@ -294,15 +434,21 @@ class Event(TimeStampedModel):
         elif self.event_type == self.EventType.LRM:  # events LRM
             if self.distance_km == 1200:
                 return timedelta(hours=90, minutes=0)
+            elif self.distance_km == 1300:  # Ej: Alpi 4000 (1300km)
+                return timedelta(hours=150, minutes=0)
             elif self.distance_km == 1400:
                 return timedelta(hours=110, minutes=0)
-            elif self.distance_km == 1500:  # x ej: London-Edinburgh-London
+            elif self.distance_km == 1450:  # Ej: Alpi 4000 (1450km)
+                return timedelta(hours=160, minutes=0)
+            elif self.distance_km == 1500:  # Ej: London-Edinburgh-London
                 return timedelta(hours=125, minutes=0)
-            elif self.distance_km == 2000: #OJO al andalus son 200h no 180
+            elif self.distance_km == 1610:  # Ej: 1001 Miglia
+                return timedelta(hours=134, minutes=0)
+            elif self.distance_km == 2000:  # OJO: Al-Andalus son 200h no 180
                 return timedelta(hours=200, minutes=0)
-            else: #velo. media mínima de 12 km/h para distancias de mas de 1200
+            else:  # Velo. media minima de 12 km/h para distancias de mas de 1200
                 horas_calculadas = int(self.distance_km / 12)
-                return timedelta(hours=horas_calculadas)#tolera si se crea otra prueba con otra distancia
+                return timedelta(hours=horas_calculadas)
 
         #Super Randonnées Permanentes (600 km y +10.000m de desnivel)
         elif self.event_type == self.EventType.SR600:
@@ -313,6 +459,8 @@ class Event(TimeStampedModel):
             return timedelta(hours=24, minutes=0)
 
         return None  # Para otros eventos sin límite estricto
+
+
 
 
 # 5. RESULTADOS, TABLA PIVOTE: Conecta Randonneur <-> Event. Aquí se guarda los tiempos y homologaciones
@@ -383,7 +531,7 @@ class Achievement(TimeStampedModel):
         R5000 = 'R5000', 'Randonneur 5000'
         R10000 = 'R10000', 'Randonneur 10000'
         PBP = 'PBP', 'PBP Finisher'
-
+        LEPERTEL = 'LEPERTEL', 'Challenge Lepertel (LRM)'
 
 
     randonneur = models.ForeignKey(Randonneur, on_delete=models.CASCADE, related_name='achievements')

@@ -17,7 +17,7 @@
         <ul>
             <li><a href="{% url 'home' %}" class="secondary">Inicio</a></li>
             <li><a href="{% url 'club_list' %}">Buscar Clubes</a></li>
-            <li><a href="{% url 'event_list' %}">Eventos</a></li>
+            <li><a href="{% url 'event_list' %}">Pruebas Deportivas</a></li>
             <li><a href="{% url 'randonneur_list' %}">Buscar Ciclistas</a></li>
             <li><a href="{% url 'claim_profile' %}" role="button">Reclamar Perfil</a></li>
         </ul>
@@ -28,8 +28,8 @@
 
         <!-- Cabecera del Perfil -->
         <hgroup>
-            <!-- etiqueta .unicode_flag de django-countries renderiza el emoji de la bandera oficial (ej. 🇪🇸 o 🇬🇧) -->
-            <h1>{{ randonneur.first_name }} {{ randonneur.last_name }} {{ randonneur.country.unicode_flag }}</h1>
+            <!-- Usamos la nueva propiedad segura de Python para evitar cualquier caida -->
+            <h1>{{ randonneur.first_name }} {{ randonneur.last_name }} {{ randonneur.safe_unicode_flag }}</h1>
             <h2> Randonneur </h2>
         </hgroup>
 
@@ -83,16 +83,23 @@
             </div>
         </section>
         {% endif %}
-        <!-- Reconocimientos Dinámicos Calculados -->
+        <!-- Sección de Reconocimientos Históricos Unificados -->
         <section>
             <h3>🏆 Distinciones y Reconocimientos</h3>
-            {% if es_sr_2024 %}
-                <article style="background-color: #d4edda; border-color: #c3e6cb; color: #155724;">
-                    <strong>🏅 Super Randonneur 2024</strong>
-                    <p style="margin-top: 0.5rem; margin-bottom: 0;">Felicidades, el sistema ha detectado de forma automática que has completado con éxito la serie de 200, 300, 400 y 600 km en el presente año natural.</p>
+
+            {% if logros_agrupados %}
+                <article style="background-color: #f1f8ff; border-color: #c8e1ff; padding: 1.5rem;">
+                    <ul style="margin-bottom: 0; padding-left: 1.2rem;">
+                        <!-- Recorremos el diccionario de logros agrupados en la base de datos -->
+                        {% for tipo_logro, detalle in logros_agrupados.items %}
+                            <li>
+                                <strong>{{ tipo_logro }}</strong> {{ detalle }}
+                            </li>
+                        {% endfor %}
+                    </ul>
                 </article>
             {% else %}
-                <p><em>Este ciclista no cuenta con reconocimientos calculados en el presente año.</em></p>
+                <p><em>Este ciclista no cuenta con reconocimientos oficiales calculados en su historial de la plataforma.</em></p>
             {% endif %}
         </section>
 
@@ -131,7 +138,7 @@
                                 {% if result.homologation_code %}
                                     <code>{{ result.homologation_code }}</code>
                                 {% else %}
-                                    <em>Sin homologación</em>
+                                    <em>No disponible/ desconocido</em>
                                 {% endif %}
                             </td>
                             <td>
