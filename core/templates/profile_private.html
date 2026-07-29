@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RandoHub - Registro de Usuario</title>
+    <title>RandoHub - Perfil Privado</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
 </head>
 <body>
 
-    <!-- Menú de navegación -->
     <!-- Menú de navegación dinámico -->
-    <!-- Menú de navegación dinámico corregido para Django moderno -->
     <nav class="container">
         <ul>
             <li><strong>🚴‍♂️ RandoHub</strong></li>
@@ -20,11 +18,9 @@
             <li><a href="{% url 'club_list' %}">Buscar Clubes</a></li>
             <li><a href="{% url 'event_list' %}">Pruebas Deportivas</a></li>
             <li><a href="{% url 'randonneur_list' %}">Buscar Ciclistas</a></li>
-
+            
             {% if user.is_authenticated %}
                 <li><a href="{% url 'claim_profile' %}">Reclamar Perfil</a></li>
-
-                <!-- El sistema realiza el cierre de sesion mediante un formulario POST seguro -->
                 <li style="display: inline-flex; align-items: center;">
                     <form action="{% url 'logout' %}" method="post" style="margin: 0; padding: 0; display: inline;">
                         {% csrf_token %}
@@ -40,33 +36,18 @@
         </ul>
     </nav>
 
-    <!-- Contenido Principal -->
-    <main class="container" style="max-width: 600px;">
-        <article>
+    <main class="container" style="max-width: 600px; margin-top: 3rem;">
+        <article style="border-top: 4px solid var(--del-color, #e53e3e);">
             <header>
-                <h2>📝 Crear Cuenta en RandoHub</h2>
-                <p>Regístrate para poder reclamar tu perfil histórico, unificar tus resultados y gestionar tu privacidad.</p>
+                <h3 style="margin: 0; color: #e53e3e;">🔒 Perfil Privado</h3>
             </header>
-
-            <!-- Formulario seguro con token de protección contra ataques CSRF de Django -->
-            <form method="POST" action="{% url 'signup' %}">
-                {% csrf_token %}
-
-                <!-- Django se encarga de pintar todos los campos de contraseña segura y usuario de forma automática -->
-                {{ form.as_p }}
-
-                <button type="submit" style="width: 100%;">Crear mi Cuenta</button>
-            </form>
-
+            <p>El perfil correspondiente a <strong>{{ randonneur_name }}</strong> ha sido configurado como privado por su propietario de acuerdo con el Reglamento General de Protección de Datos (RGPD).</p>
+            <p>La información detallada, estadísticas y palmarés histórico de este ciclista no se encuentran accesibles al público general.</p>
             <footer>
-                <small>¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión aquí</a></small>
+                <a href="{% url 'randonneur_list' %}" class="button contrast">Volver al Directorio</a>
             </footer>
         </article>
     </main>
-
-    <footer class="container" style="text-align: center; margin-top: 3rem; border-top: 1px solid #ccc; padding-top: 1rem;">
-        <small>© 2026 RandoHub.</small>
-    </footer>
 
 </body>
 </html>

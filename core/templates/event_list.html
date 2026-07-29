@@ -17,6 +17,8 @@
 <body>
 
     <!-- Menú de navegación -->
+    <!-- Menú de navegación dinámico -->
+    <!-- Menú de navegación dinámico corregido para Django moderno -->
     <nav class="container">
         <ul>
             <li><strong>🚴‍♂️ RandoHub</strong></li>
@@ -26,7 +28,23 @@
             <li><a href="{% url 'club_list' %}">Buscar Clubes</a></li>
             <li><a href="{% url 'event_list' %}">Pruebas Deportivas</a></li>
             <li><a href="{% url 'randonneur_list' %}">Buscar Ciclistas</a></li>
-            <li><a href="{% url 'claim_profile' %}" role="button">Reclamar Perfil</a></li>
+
+            {% if user.is_authenticated %}
+                <li><a href="{% url 'claim_profile' %}">Reclamar Perfil</a></li>
+
+                <!-- El sistema realiza el cierre de sesion mediante un formulario POST seguro -->
+                <li style="display: inline-flex; align-items: center;">
+                    <form action="{% url 'logout' %}" method="post" style="margin: 0; padding: 0; display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="secondary outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem; margin: 0; width: auto; border: none; background: none; cursor: pointer; color: var(--secondary);">
+                            Cerrar Sesión
+                        </button>
+                    </form>
+                </li>
+            {% else %}
+                <li><a href="{% url 'login' %}" role="button" class="outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">Iniciar Sesión</a></li>
+                <li><a href="{% url 'signup' %}" role="button" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">Registrarse</a></li>
+            {% endif %}
         </ul>
     </nav>
 
@@ -99,6 +117,29 @@
                 {% endif %}
             </form>
         </section>
+
+        <!-- ======================================================== -->
+        <!-- HISTORIA Y NORMATIVA CONTEXTUAL DINÁMICA -->
+        <!-- ======================================================== -->
+        <div style="margin-top: 1rem; margin-bottom: 2rem;">
+            {# El sistema renderiza el componente informativo segun el filtro activo del usuario #}
+            {% if selected_type == 'LRM' %}
+                {% include 'info/lrm_info.html' %}
+            {% elif selected_type == 'SR600' %}
+                {% include 'info/sr600_info.html' %}
+            {% else %}
+                {# Si no hay un filtro activo, el sistema agrupa ambas informaciones en un acordeon #}
+                <details>
+                    <summary style="font-weight: bold; color: var(--primary);">ℹ️ Conoce la Historia y Normativa de las Pruebas Randonneur</summary>
+                    <div style="margin-top: 1rem;">
+                        {% include 'info/lrm_info.html' %}
+                        <div style="margin-top: 1.5rem;"></div>
+                        {% include 'info/sr600_info.html' %}
+                    </div>
+                </details>
+            {% endif %}
+        </div>
+        <!-- ======================================================== -->
 
         <!-- Calendario de Eventos en Tarjetas (Grid) -->
         <section>

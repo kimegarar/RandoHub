@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RandoHub - Registro de Usuario</title>
+    <title>RandoHub - Iniciar Sesión</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
 </head>
 <body>
 
-    <!-- Menú de navegación -->
     <!-- Menú de navegación dinámico -->
     <!-- Menú de navegación dinámico corregido para Django moderno -->
     <nav class="container">
@@ -40,33 +39,38 @@
         </ul>
     </nav>
 
-    <!-- Contenido Principal -->
-    <main class="container" style="max-width: 600px;">
+    <main class="container" style="max-width: 500px; margin-top: 3rem;">
         <article>
             <header>
-                <h2>📝 Crear Cuenta en RandoHub</h2>
-                <p>Regístrate para poder reclamar tu perfil histórico, unificar tus resultados y gestionar tu privacidad.</p>
+                <h3 style="margin: 0; text-align: center;">Iniciar Sesión</h3>
             </header>
 
-            <!-- Formulario seguro con token de protección contra ataques CSRF de Django -->
-            <form method="POST" action="{% url 'signup' %}">
+            {# El sistema muestra un mensaje de error si las credenciales fallan #}
+            {% if form.errors %}
+                <p style="color: #e74c3c; font-weight: bold; text-align: center;">
+                    Usuario o contraseña incorrectos.
+                </p>
+            {% endif %}
+
+            <form method="post">
                 {% csrf_token %}
 
-                <!-- Django se encarga de pintar todos los campos de contraseña segura y usuario de forma automática -->
-                {{ form.as_p }}
+                <label for="id_username">Nombre de Usuario</label>
+                <input type="text" name="username" id="id_username" placeholder="Usuario" required>
 
-                <button type="submit" style="width: 100%;">Crear mi Cuenta</button>
+                <label for="id_password">Contraseña</label>
+                <input type="password" name="password" id="id_password" placeholder="Contraseña" required>
+
+                <button type="submit" class="primary" style="width: 100%; margin-top: 1rem;">Entrar</button>
             </form>
 
             <footer>
-                <small>¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión aquí</a></small>
+                <p style="text-align: center; margin: 0; font-size: 0.9rem;">
+                    ¿No tienes cuenta todavía? <a href="{% url 'signup' %}">Regístrate aquí</a>
+                </p>
             </footer>
         </article>
     </main>
-
-    <footer class="container" style="text-align: center; margin-top: 3rem; border-top: 1px solid #ccc; padding-top: 1rem;">
-        <small>© 2026 RandoHub.</small>
-    </footer>
 
 </body>
 </html>

@@ -1,0 +1,66 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; margin: 2rem auto; font-family: sans-serif;">
+    <h2>Asistente de Fusión de Perfiles Randonneurs</h2>
+    <p>Se han seleccionado dos perfiles que posiblemente corresponden a la misma persona física debido a una errata en la ingesta original. Por favor, selecciona cuál es el <strong>Perfil Máster (Destino)</strong> que deseas conservar y cuál es el <strong>Perfil Duplicado (Origen)</strong> que será eliminado de forma segura una vez transferidos sus resultados.</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="fusionar_randonneurs_action" />
+        <input type="hidden" name="confirmar_fusion" value="yes" />
+        
+        {# Campos ocultos obligatorios para que Django Admin procese la seleccion anterior #}
+        <input type="hidden" name="post" value="yes" />
+        <input type="hidden" name="_selected_action" value="{{ perfil_a.pk }}" />
+        <input type="hidden" name="_selected_action" value="{{ perfil_b.pk }}" />
+
+        <div style="display: flex; gap: 2rem; margin: 2rem 0;">
+            <!-- Opción A -->
+            <div style="flex: 1; padding: 1.5rem; border: 2px solid #ccc; border-radius: 8px; background: #fafafa; color: #333;">
+                <label style="font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 1rem;">
+                    <input type="radio" name="master_id" value="{{ perfil_a.pk }}" required checked onclick="document.getElementById('dup_id').value='{{ perfil_b.pk }}'" />
+                    Conservar este Perfil (Máster)
+                </label>
+                <hr>
+                <p><strong>Nombre:</strong> {{ perfil_a.first_name }} {{ perfil_a.last_name }}</p>
+                <p><strong>ID Interno:</strong> {{ perfil_a.pk }}</p>
+                <p><strong>Club Actual:</strong> {{ perfil_a.club }}</p>
+                <p><strong>Resultados Totales:</strong> {{ perfil_a.results.count }}</p>
+                <p><strong>Estado Registro:</strong> {% if perfil_a.is_claimed %}✅ Reclamado{% else %}👤 Histórico{% endif %}</p>
+            </div>
+
+            <!-- Opción B -->
+            <div style="flex: 1; padding: 1.5rem; border: 2px solid #ccc; border-radius: 8px; background: #fafafa; color: #333;">
+                <label style="font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 1rem;">
+                    <input type="radio" name="master_id" value="{{ perfil_b.pk }}" required onclick="document.getElementById('dup_id').value='{{ perfil_a.pk }}'" />
+                    Conservar este Perfil (Máster)
+                </label>
+                <hr>
+                <p><strong>Nombre:</strong> {{ perfil_b.first_name }} {{ perfil_b.last_name }}</p>
+                <p><strong>ID Interno:</strong> {{ perfil_b.pk }}</p>
+                <p><strong>Club Actual:</strong> {{ perfil_b.club }}</p>
+                <p><strong>Resultados Totales:</strong> {{ perfil_b.results.count }}</p>
+                <p><strong>Estado Registro:</strong> {% if perfil_b.is_claimed %}✅ Reclamado{% else %}👤 Histórico{% endif %}</p>
+            </div>
+        </div>
+
+        <!-- Campo oculto para enviar cual es el duplicado a eliminar -->
+        <input type="hidden" name="duplicate_id" id="dup_id" value="{{ perfil_b.pk }}" />
+
+        <div style="margin-top: 2rem; background: #fff5f5; border: 1px solid #feb2b2; padding: 1rem; border-radius: 4px; color: #c53030;">
+            <strong>⚠️ Atención:</strong> Esta operación es irreversible. Al hacer clic en "Confirmar Fusión", todos los resultados del perfil no seleccionado se moverán al perfil máster y el perfil sobrante se eliminará permanentemente de la base de datos.
+        </div>
+
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+            <button type="submit" style="background: #3182ce; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                Confirmar Fusión
+            </button>
+            <a href="." style="background: #e2e8f0; color: #4a5568; padding: 0.75rem 1.5rem; border-radius: 4px; text-decoration: none; font-weight: bold;">
+                Cancelar y Volver
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

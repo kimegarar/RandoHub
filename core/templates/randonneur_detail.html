@@ -10,6 +10,8 @@
 <body>
 
     <!-- Menú de navegación -->
+    <!-- Menú de navegación dinámico -->
+    <!-- Menú de navegación dinámico corregido para Django moderno -->
     <nav class="container">
         <ul>
             <li><strong>🚴‍♂️ RandoHub</strong></li>
@@ -19,7 +21,23 @@
             <li><a href="{% url 'club_list' %}">Buscar Clubes</a></li>
             <li><a href="{% url 'event_list' %}">Pruebas Deportivas</a></li>
             <li><a href="{% url 'randonneur_list' %}">Buscar Ciclistas</a></li>
-            <li><a href="{% url 'claim_profile' %}" role="button">Reclamar Perfil</a></li>
+
+            {% if user.is_authenticated %}
+                <li><a href="{% url 'claim_profile' %}">Reclamar Perfil</a></li>
+
+                <!-- El sistema realiza el cierre de sesion mediante un formulario POST seguro -->
+                <li style="display: inline-flex; align-items: center;">
+                    <form action="{% url 'logout' %}" method="post" style="margin: 0; padding: 0; display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="secondary outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem; margin: 0; width: auto; border: none; background: none; cursor: pointer; color: var(--secondary);">
+                            Cerrar Sesión
+                        </button>
+                    </form>
+                </li>
+            {% else %}
+                <li><a href="{% url 'login' %}" role="button" class="outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">Iniciar Sesión</a></li>
+                <li><a href="{% url 'signup' %}" role="button" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">Registrarse</a></li>
+            {% endif %}
         </ul>
     </nav>
 
@@ -37,24 +55,42 @@
         <article>
             <div class="grid">
                 <div>
-                    <h5>🏢 Club </h5>
+                    <h5>Club </h5>
                     <p><strong>{{ randonneur.club.name }}</strong> ({{ randonneur.club.location }})</p>
                 </div>
-                <div style="text-align: right;">
-                    <h5>🔒 Estado del Perfil</h5>
-                    {% if randonneur.is_claimed %}
-                        <span style="color: #2ecc71; font-weight: bold; display: block; margin-bottom: 0.5rem;">✅ Perfil Reclamado</span>
+                <!-- Mensajes de exito o error dinamicos de Django -->
+                {% if messages %}
+                <div style="margin-top: 1rem;">
+                    {% for message in messages %}
+                        <mark style="display: block; margin-bottom: 0.5rem; background-color: {% if message.tags == 'error' %}#f8d7da{% else %}#d4edda{% endif %}; color: {% if message.tags == 'error' %}#721c24{% else %}#155724{% endif %}; padding: 0.5rem 1rem; border-radius: 4px;">
+                            {{ message }}
+                        </mark>
+                    {% endfor %}
+                </div>
+            {% endif %}
 
-                        <!-- CONTROL DE EDICIÓN: Solo el dueño real del perfil puede ver el botón de editar -->
-                        {% if request.user == randonneur.user %}
-                            <a href="{% url 'edit_profile' pk=randonneur.pk %}" class="button outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">⚙️ Editar Configuración</a>
-                        {% endif %}
+            <!-- ... en la seccion de Estado de Perfil ... -->
+            <div style="text-align: right;">
+                <h5>🔒 Estado del Perfil</h5>
+                {% if randonneur.is_claimed %}
+                    <span style="color: #2ecc71; font-weight: bold; display: block; margin-bottom: 0.5rem;">✅ Perfil Reclamado</span>
 
-                    {% else %}
-                        <span style="color: #e67e22; font-weight: bold;">👤 Perfil Histórico</span>
+                    {% if request.user == randonneur.user %}
+                        <a href="{% url 'edit_profile' pk=randonneur.pk %}" class="button outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">⚙️ Editar Configuración</a>
                     {% endif %}
-                </div>
-                </div>
+
+                {% else %}
+                    <span style="color: #e67e22; font-weight: bold; display: block; margin-bottom: 0.5rem;">👤 Perfil Histórico</span>
+
+                    {# BOTÓN DE SOLICITUD DE FUSIÓN: Evaluacion de condiciones de seguridad #}
+                <--! evaluar user.randonneur_profile en el motor de plantillas de Django, si no existe, se evalúa silenciosamente como falso sin lanzar errores, ocultando el botón para los usuarios no reclamados  -->
+                    {% if user.is_authenticated and user.randonneur_profile and randonneur != user.randonneur_profile %}
+                        <div style="margin-top: 0.5rem;">
+                            <a href="{% url 'request_profile_merge' randonneur.pk %}" class="button outline secondary" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">🔗 Solicitar Fusión con mi Perfil</a>
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
             </div>
         </article>
         <!-- ========================================== -->

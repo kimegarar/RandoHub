@@ -551,3 +551,53 @@ class Achievement(TimeStampedModel):
 
     def __repr__(self):
         return f"<Achievement: {self.randonneur.id} {self.kind} {self.year}>"
+
+
+#Para evitar que el registro de solicitudes se borre cuando eliminemos el perfil duplicado tras la fusión,
+# configuraremos los campos master y duplicate con on_delete=models.SET_NULL (permitiendo valores nulos).
+#y mantendrá el registro de auditoría histórico solicitudes, tb después de que el perfil duplicado haya dejado de existir.
+class MergeRequest(TimeStampedModel):
+    class StatusChoices(models.TextChoices):
+        PENDING = 'PENDING', _('Pending')
+        APPROVED = 'APPROVED', _('Approved')
+        REJECTED = 'REJECTED', _('Rejected')
+
+    requested_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='submitted_merge_requests',
+        verbose_name=_("Requested by")
+    )
+    master = models.ForeignKey(
+        Randonneur,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='merge_requests_as_master',
+        verbose_name=_("Master Profile (Destination)")
+    )
+    duplicate = models.ForeignKey(
+        Randonneur,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='merge_requests_as_duplicate',
+        verbose_name=_("Duplicate Profile (To merge)")
+    )
+    status = models.CharField(
+        max_length=15,
+        choices=StatusChoices.choices,
+        default=StatusChoices.PENDING,
+        verbose_name=_("Status")
+    )
+
+    class Meta:
+        verbose_name = _("Merge Request")
+        verbose_name_plural = _("Merge Requests")
+        unique_together = ('master', 'duplicate')
+
+    def __str__(self):
+        # El sistema valida si los perfiles existen todavia antes de retornar la cadena
+        master_name = f"ID {self.master.id}" if self.master else "Eliminado"
+        dup_name = f"ID {self.duplicate.id}" if self.duplicate else "Eliminado"
+        return f"Solicitud de {self.requested_by.username}: {dup_name} -> {master_name} ({self.get_status_display()})"

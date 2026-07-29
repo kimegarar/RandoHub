@@ -17,8 +17,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
-from django.contrib import admin
-from django.urls import path
+from django.contrib.auth import views as auth_views # El sistema importa las vistas nativas de autenticacion de Django
 from core import views #para poder usar las views que hay en core, da permiso a urls para acceder a core
 
 urlpatterns = [
@@ -29,17 +28,35 @@ urlpatterns = [
     # views.home: "usa la función home del archivo views"
     # name='home': "nombre d esta ruta 'home' para referirse a ella luego"
 
+
     path('', views.home, name='home'), #ruta de portada
+
+    # Rutas de Autenticacion del Sistema
+    path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(next_page='home'), name='logout'),
+    path('signup/', views.signup, name='signup'), # RUTA DE REGISTRO
+
+
+    # Pruebas Deportivas
     path('events/', views.event_list, name='event_list'), #los events o pruebas
-    path('randonneurs/<int:pk>/', views.randonneur_detail, name='randonneur_detail'),#RUTA DINÁMICA
+    path('events/<int:pk>/', views.event_detail, name='event_detail'), # RUTA DINÁMICA DE EVENTOS LRM
+
+
+    # Ciclistas (Randonneurs)
+    path('randonneurs/', views.randonneur_list, name='randonneur_list'), # RUTA DIRECTORIO DE CICLISTAS
+    path('randonneurs/<int:pk>/', views.randonneur_detail, name='randonneur_detail'), #RUTA DINÁMICA
+    path('randonneurs/<int:pk>/edit/', views.edit_profile, name='edit_profile'), #ruta de edición de perfil
+
+    #Clubs
     path('clubs/<int:pk>/', views.club_detail, name='club_detail'), # RUTA DINÁMICA DE CLUB
     path('clubs/', views.club_country_list, name='club_list'),  # Selector de Países
     path('clubs/<str:country_code>/', views.club_region_list, name='club_region_list'), #Filtro por Región
-    path('signup/', views.signup, name='signup'),  # RUTA DE REGISTRO
+
+    # Flujo de Reclamacion de Perfil
     path('claim/', views.claim_profile, name='claim_profile'),  # buscador de reclamos de perfil
     path('claim/confirm/<int:pk>/', views.confirm_claim, name='confirm_claim'), #la acción de reclamar
-    path('randonneurs/<int:pk>/edit/', views.edit_profile, name='edit_profile'),#ruta de edición de perfil
-    path('randonneurs/', views.randonneur_list, name='randonneur_list'), # RUTA DIRECTORIO DE CICLISTAS
-    path('events/<int:pk>/', views.event_detail, name='event_detail'), # RUTA DINÁMICA DE EVENTOS LRM
+
+    path('randonneurs/<int:pk>/request-merge/', views.request_profile_merge, name='request_profile_merge'),
+
 ]
 

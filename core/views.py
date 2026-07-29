@@ -11,6 +11,9 @@ from django.db.models.functions import Concat # Importación de concatenación e
 from core.models import Club, Randonneur, Event
 from core.forms import RandonneurProfileForm ##import del formulario privacidad rrss
 
+from django.contrib import messages
+from core.models import MergeRequest # El sistema importa el nuevo modelo
+
 
 #la def DEBE recibir el objeto 'request' (quién es, qué navegador usa, qué pide...)
 #nota: esta def Recibe el paquete de información (request) cuando alguien llama a la puerta.
@@ -87,19 +90,43 @@ def event_list(request):
 def randonneur_detail(request, pk):
     """
     Vista dinamica para mostrar el perfil deportivo de un ciclista especifico.
+    Implementa motor de validacion GDPR para restringir  acceso segun el nivel de privacidad.
     Sincroniza y calcula los reconocimientos reales en la base de datos antes de renderizar.
     """
     randonneur = get_object_or_404(Randonneur, pk=pk)
 
-    # SINCRONIZACIÓN AUTOMÁTICA: Calculamos y guardamos fisicamente los logros del ciclista
+    # 1. EVALUACIÓN DE PRIVACIDAD: Nivel Privado
+    if randonneur.privacy_level == Randonneur.PrivacyLevel.PRIVATE:
+        # El sistema solo permite el acceso si el usuario esta autenticado y es el dueño del perfil
+        if not request.user.is_authenticated or randonneur.user != request.user:
+            return render(
+                request,
+                'profile_private.html',
+                {'randonneur_name': f"{randonneur.first_name} {randonneur.last_name}"},
+                status=403
+            )
+
+    # 2. EVALUACIÓN DE PRIVACIDAD: Nivel Comunidad
+    elif randonneur.privacy_level == Randonneur.PrivacyLevel.COMMUNITY:
+        # El sistema exige que el visitante este autenticado en la plataforma
+        if not request.user.is_authenticated:
+            return render(
+                request,
+                'profile_restricted.html',
+                {'randonneur_name': f"{randonneur.first_name} {randonneur.last_name}"},
+                status=401
+            )
+
+    # 3. PROCESO DE NEGOCIO: Si supera el control de privacidad, se procesa la informacion
+    # Sincronizacion de logros fisicos en la base de datos
     randonneur.sincronizar_logros()
 
-    # RECUPERACIÓN AGRUPADA: Obtenemos los logros estructurados como 'Tipo (Cantidad: Anos)'
+    # Recuperacion de logros agregados estructurados
     logros_agrupados = randonneur.obtener_logros_agrupados()
 
     context = {
         'randonneur': randonneur,
-        'logros_agrupados': logros_agrupados,  # Enviamos el diccionario a la plantilla
+        'logros_agrupados': logros_agrupados,
     }
     return render(request, 'randonneur_detail.html', context)
 
@@ -303,3 +330,44 @@ def event_detail(request, pk):
         'results': results,
     }
     return render(request, 'event_detail.html', context)
+
+
+@login_required
+def request_profile_merge(request, pk):
+    """
+    Registra una solicitud de fusion enviada por un usuario autenticado.
+    El perfil reclamado del usuario actua como master y el perfil con el ID provisto como duplicado.
+    """
+    # El sistema intenta recuperar el perfil duplicado que se desea absorber
+    duplicate = get_object_or_404(Randonneur, pk=pk, is_claimed=False)
+
+    # Se comprueba si el usuario activo tiene un perfil ya reclamado
+    try:
+        master = request.user.randonneur_profile
+    # El sistema captura la excepcion nativa de Django para relaciones OneToOne inexistentes
+    except Randonneur.DoesNotExist:
+        messages.error(request, "Error: Debes tener un perfil reclamado previamente para solicitar fusiones.")
+        return redirect('randonneur_detail', pk=pk)
+
+    if not master:
+        messages.error(request, "Error: No posees un perfil deportivo activo vinculado a tu cuenta.")
+        return redirect('randonneur_detail', pk=pk)
+
+    # Evitar solicitar la fusion de un perfil consigo mismo
+    if master.pk == duplicate.pk:
+        messages.error(request, "Error: No puedes solicitar fusionar un perfil consigo mismo.")
+        return redirect('randonneur_detail', pk=pk)
+
+    # El sistema registra o recupera la solicitud de fusion pendiente para evitar duplicados en la cola
+    merge_request, created = MergeRequest.objects.get_or_create(
+        master=master,
+        duplicate=duplicate,
+        defaults={'requested_by': request.user}
+    )
+
+    if created:
+        messages.success(request, "Solicitud de fusion registrada correctamente. Un administrador la revisara.")
+    else:
+        messages.info(request, "Ya existe una solicitud de fusion en cola de revision para estos perfiles.")
+
+    return redirect('randonneur_detail', pk=duplicate.pk)
