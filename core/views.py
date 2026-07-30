@@ -13,6 +13,7 @@ from core.forms import RandonneurProfileForm ##import del formulario privacidad 
 
 from django.contrib import messages
 from core.models import MergeRequest # El sistema importa el nuevo modelo
+from django.utils import timezone # El sistema importa la utilidad de tiempo de Django
 
 
 #la def DEBE recibir el objeto 'request' (quién es, qué navegador usa, qué pide...)
@@ -90,14 +91,13 @@ def event_list(request):
 def randonneur_detail(request, pk):
     """
     Vista dinamica para mostrar el perfil deportivo de un ciclista especifico.
-    Implementa motor de validacion GDPR para restringir  acceso segun el nivel de privacidad.
+    Implementa motor de validacion GDPR para restringir acceso segun el nivel de privacidad.
     Sincroniza y calcula los reconocimientos reales en la base de datos antes de renderizar.
     """
     randonneur = get_object_or_404(Randonneur, pk=pk)
 
     # 1. EVALUACIÓN DE PRIVACIDAD: Nivel Privado
     if randonneur.privacy_level == Randonneur.PrivacyLevel.PRIVATE:
-        # El sistema solo permite el acceso si el usuario esta autenticado y es el dueño del perfil
         if not request.user.is_authenticated or randonneur.user != request.user:
             return render(
                 request,
@@ -108,7 +108,6 @@ def randonneur_detail(request, pk):
 
     # 2. EVALUACIÓN DE PRIVACIDAD: Nivel Comunidad
     elif randonneur.privacy_level == Randonneur.PrivacyLevel.COMMUNITY:
-        # El sistema exige que el visitante este autenticado en la plataforma
         if not request.user.is_authenticated:
             return render(
                 request,
@@ -121,14 +120,25 @@ def randonneur_detail(request, pk):
     # Sincronizacion de logros fisicos en la base de datos
     randonneur.sincronizar_logros()
 
-    # Recuperacion de logros agregados estructurados
+    # Recuperacion de logros agrupados estructurados
     logros_agrupados = randonneur.obtener_logros_agrupados()
+
+    # El sistema calcula el progreso del ciclista para el ano actual (fijado en 2024 para las pruebas)
+    progreso_sr = randonneur.calcular_progreso_super_randonneur(2024)
+    # El sistema recupera las SR600 completadas y agrupadas
+    sr600_agrupadas = randonneur.obtener_sr600_completadas_agrupadas()
 
     context = {
         'randonneur': randonneur,
         'logros_agrupados': logros_agrupados,
+        'progreso_sr': progreso_sr,
+        'sr600_agrupadas': sr600_agrupadas,  # Enviamos las SR600 agrupadas a la plantilla
     }
+
+
     return render(request, 'randonneur_detail.html', context)
+
+
 
 
 def club_detail(request, pk):

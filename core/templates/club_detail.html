@@ -22,6 +22,10 @@
             <li><a href="{% url 'randonneur_list' %}">Buscar Ciclistas</a></li>
 
             {% if user.is_authenticated %}
+                {# Si el usuario ya tiene su perfil reclamado, se muestra el acceso directo a Mi Perfil #}
+                {% if user.randonneur_profile %}
+                    <li><a href="{% url 'randonneur_detail' pk=user.randonneur_profile.pk %}" style="font-weight: bold;">Mi Perfil</a></li>
+                {% endif %}
                 <li><a href="{% url 'claim_profile' %}">Reclamar Perfil</a></li>
 
                 <!-- El sistema realiza el cierre de sesion mediante un formulario POST seguro -->

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -9,9 +8,7 @@
 </head>
 <body>
 
-    <!-- Menú de navegación -->
     <!-- Menú de navegación dinámico -->
-    <!-- Menú de navegación dinámico corregido para Django moderno -->
     <nav class="container">
         <ul>
             <li><strong>🚴‍♂️ RandoHub</strong></li>
@@ -23,9 +20,13 @@
             <li><a href="{% url 'randonneur_list' %}">Buscar Ciclistas</a></li>
 
             {% if user.is_authenticated %}
+                {# Si el usuario ya tiene su perfil reclamado, se muestra el acceso directo a Mi Perfil #}
+                {% if user.randonneur_profile %}
+                    <li><a href="{% url 'randonneur_detail' pk=user.randonneur_profile.pk %}" style="font-weight: bold;">Mi Perfil</a></li>
+                {% endif %}
+
                 <li><a href="{% url 'claim_profile' %}">Reclamar Perfil</a></li>
 
-                <!-- El sistema realiza el cierre de sesion mediante un formulario POST seguro -->
                 <li style="display: inline-flex; align-items: center;">
                     <form action="{% url 'logout' %}" method="post" style="margin: 0; padding: 0; display: inline;">
                         {% csrf_token %}
@@ -46,7 +47,6 @@
 
         <!-- Cabecera del Perfil -->
         <hgroup>
-            <!-- Usamos la nueva propiedad segura de Python para evitar cualquier caida -->
             <h1>{{ randonneur.first_name }} {{ randonneur.last_name }} {{ randonneur.safe_unicode_flag }}</h1>
             <h2> Randonneur </h2>
         </hgroup>
@@ -56,8 +56,13 @@
             <div class="grid">
                 <div>
                     <h5>Club </h5>
-                    <p><strong>{{ randonneur.club.name }}</strong> ({{ randonneur.club.location }})</p>
+                    {% if randonneur.club %}
+                        <p><strong>{{ randonneur.club.name }}</strong> ({{ randonneur.club.location }})</p>
+                    {% else %}
+                        <p><em>Independiente / Sin club registrado</em></p>
+                    {% endif %}
                 </div>
+
                 <!-- Mensajes de exito o error dinamicos de Django -->
                 {% if messages %}
                 <div style="margin-top: 1rem;">
@@ -67,66 +72,56 @@
                         </mark>
                     {% endfor %}
                 </div>
-            {% endif %}
-
-            <!-- ... en la seccion de Estado de Perfil ... -->
-            <div style="text-align: right;">
-                <h5>🔒 Estado del Perfil</h5>
-                {% if randonneur.is_claimed %}
-                    <span style="color: #2ecc71; font-weight: bold; display: block; margin-bottom: 0.5rem;">✅ Perfil Reclamado</span>
-
-                    {% if request.user == randonneur.user %}
-                        <a href="{% url 'edit_profile' pk=randonneur.pk %}" class="button outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">⚙️ Editar Configuración</a>
-                    {% endif %}
-
-                {% else %}
-                    <span style="color: #e67e22; font-weight: bold; display: block; margin-bottom: 0.5rem;">👤 Perfil Histórico</span>
-
-                    {# BOTÓN DE SOLICITUD DE FUSIÓN: Evaluacion de condiciones de seguridad #}
-                <--! evaluar user.randonneur_profile en el motor de plantillas de Django, si no existe, se evalúa silenciosamente como falso sin lanzar errores, ocultando el botón para los usuarios no reclamados  -->
-                    {% if user.is_authenticated and user.randonneur_profile and randonneur != user.randonneur_profile %}
-                        <div style="margin-top: 0.5rem;">
-                            <a href="{% url 'request_profile_merge' randonneur.pk %}" class="button outline secondary" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">🔗 Solicitar Fusión con mi Perfil</a>
-                        </div>
-                    {% endif %}
                 {% endif %}
-            </div>
+
+                <div style="text-align: right;">
+                    <h5>🔒 Estado del Perfil</h5>
+                    {% if randonneur.is_claimed %}
+                        <span style="color: #2ecc71; font-weight: bold; display: block; margin-bottom: 0.5rem;">✅ Perfil Reclamado</span>
+
+                        {% if request.user == randonneur.user %}
+                            <a href="{% url 'edit_profile' pk=randonneur.pk %}" class="button outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">⚙️ Editar Configuración</a>
+                        {% endif %}
+                    {% else %}
+                        <span style="color: #e67e22; font-weight: bold; display: block; margin-bottom: 0.5rem;">👤 Perfil Histórico</span>
+
+                        {# El sistema evalua silenciosamente si el usuario puede solicitar fusiones #}
+                        {% if user.is_authenticated and user.randonneur_profile and randonneur != user.randonneur_profile %}
+                            <div style="margin-top: 0.5rem;">
+                                <a href="{% url 'request_profile_merge' randonneur.pk %}" class="button outline secondary" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">🔗 Solicitar Fusión con mi Perfil</a>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
             </div>
         </article>
-        <!-- ========================================== -->
-        <!-- ⭐ ENLACES Y REDES SOCIALES DINÁMICAS ⭐ -->
-        <!-- ========================================== -->
+
+        <!-- Redes Sociales y Enlaces -->
         {% if randonneur.strava_link or randonneur.instagram_link or randonneur.other_link %}
         <section style="margin-top: 2rem;">
             <h3>🌐 Redes Sociales y Enlaces</h3>
             <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem;">
-
                 {% if randonneur.strava_link %}
-                    <!-- Botón personalizado de Strava con su naranja oficial -->
                     <a href="{{ randonneur.strava_link }}" target="_blank" role="button" class="outline" style="border-color: #fc4c02; color: #fc4c02;"> Strava</a>
                 {% endif %}
 
                 {% if randonneur.instagram_link %}
-                    <!-- Botón personalizado de Instagram con su rosa oficial -->
                     <a href="{{ randonneur.instagram_link }}" target="_blank" role="button" class="outline" style="border-color: #e1306c; color: #e1306c;"> Instagram</a>
                 {% endif %}
 
                 {% if randonneur.other_link %}
-                    <!-- Botón para blog o web personal -->
                     <a href="{{ randonneur.other_link }}" target="_blank" role="button" class="outline" style="border-color: #17a2b8; color: #17a2b8;">🔗 Web / Blog</a>
                 {% endif %}
-
             </div>
         </section>
         {% endif %}
+
         <!-- Sección de Reconocimientos Históricos Unificados -->
         <section>
             <h3>🏆 Distinciones y Reconocimientos</h3>
-
             {% if logros_agrupados %}
                 <article style="background-color: #f1f8ff; border-color: #c8e1ff; padding: 1.5rem;">
                     <ul style="margin-bottom: 0; padding-left: 1.2rem;">
-                        <!-- Recorremos el diccionario de logros agrupados en la base de datos -->
                         {% for tipo_logro, detalle in logros_agrupados.items %}
                             <li>
                                 <strong>{{ tipo_logro }}</strong> {{ detalle }}
@@ -138,6 +133,65 @@
                 <p><em>Este ciclista no cuenta con reconocimientos oficiales calculados en su historial de la plataforma.</em></p>
             {% endif %}
         </section>
+
+        <!-- Sección de Super Randonnées Permanentes Completadas -->
+        {% if sr600_agrupadas %}
+        <section style="margin-top: 2rem;">
+            <h3>⛰️ Super Randonnées Permanentes Finalizadas</h3>
+            <article style="background-color: #fff9e6; border-color: #ffeeba; padding: 1.5rem;">
+                <ul style="margin-bottom: 0; padding-left: 1.2rem;">
+                    {% for ruta, detalle in sr600_agrupadas.items %}
+                        <li>
+                            <strong>{{ ruta }}</strong>{{ detalle }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </article>
+        </section>
+        {% endif %}
+
+        <!-- Sección Dinámica de Progreso (Solo para el propietario) -->
+        {% if user.is_authenticated and user.randonneur_profile == randonneur %}
+        <section style="margin-top: 2rem;">
+            <h3>📊 Mi Progreso Super Randonneur (2024)</h3>
+            <article style="border-left: 5px solid var(--primary); padding: 1.5rem;">
+                {% if progreso_sr.completado_total %}
+                    <p style="color: #2ecc71; font-weight: bold; font-size: 1.1rem; margin-bottom: 0.5rem;">
+                        🏆 ¡Felicidades! Has completado la serie completa Super Randonneur en 2024.
+                    </p>
+                    <p style="margin: 0;">Puedes tramitar la medalla oficial a través del representante nacional de tu país. <a href="{% url 'event_list' %}?type=BRM">Ver calendario oficial</a>.</p>
+                {% else %}
+                    <p style="font-weight: bold; margin-bottom: 0.5rem;">
+                        Progreso actual de la serie obligatoria: {{ progreso_sr.porcentaje }}%
+                    </p>
+                    <progress value="{{ progreso_sr.porcentaje }}" max="100"></progress>
+                    <div class="grid" style="margin-top: 1rem; font-size: 0.95rem;">
+                        <div>
+                            <strong>✅ Completadas:</strong>
+                            <ul style="margin: 0; padding-left: 1.2rem;">
+                                {% for dist in progreso_sr.completadas %}
+                                    <li>Brevet de {{ dist }} km</li>
+                                {% empty %}
+                                    <li><em>Ninguna distancia completada todavía este año.</em></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div>
+                            <strong>⏳ Te falta para el título:</strong>
+                            <ul style="margin: 0; padding-left: 1.2rem;">
+                                {% for dist in progreso_sr.faltantes %}
+                                    <li>
+                                        Brevet de {{ dist }} km
+                                        <a href="{% url 'event_list' %}?type=BRM&distance={{ dist }}" style="font-size: 0.8rem; margin-left: 0.5rem;">🔍 Buscar Pruebas</a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                {% endif %}
+            </article>
+        </section>
+        {% endif %}
 
         <!-- Tabla de Resultados Personales (Historial) -->
         <section>
@@ -156,7 +210,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Recorremos la relación inversa (results) gracias a Django -->
                         {% for result in randonneur.results.all %}
                         <tr>
                             <td><strong>{{ result.event.name }}</strong></td>

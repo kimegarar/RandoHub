@@ -42,6 +42,7 @@ class Organization(TimeStampedModel):
 class Club(TimeStampedModel):
 
     #DICt DE TRADUCCIÓN CC.AA.
+    #OJO esto habra que hacerlo de cada pais?!??!?!?
     class RegionChoices(models.TextChoices): #TextChoices de Django
         ANDALUCIA = 'an', 'Andalucía'
         ARAGON = 'ar', 'Aragón'
@@ -301,6 +302,41 @@ class Randonneur(TimeStampedModel):
                     year=ultimo_resultado.event.year,
                     kind=Achievement.Type.LEPERTEL
                 )
+        #DETECTOR DE RETOS DE SUPER RANDONNÉES (10x, 20x, 30x)
+        resultados_sr = self.results.filter(
+            event__event_type=Event.EventType.SR600,
+            status=Result.Status.FINISHER
+        )
+
+        # Se extraen los slugs unicos de las rutas para validar que sean diferentes
+        rutas_distintas = set(resultados_sr.values_list('event__slug', flat=True))
+        total_rutas = len(rutas_distintas)
+
+        if total_rutas >= 10:
+            from core.models import Achievement
+            # Se registra el reconocimiento en el año de la ultima SR finalizada
+            ultimo_sr = resultados_sr.order_by('-event__start_date').first()
+            ano_logro = ultimo_sr.event.year if ultimo_sr else 2024
+
+            # El sistema comprueba cuantos retos le corresponden de manera acumulativa
+            Achievement.objects.get_or_create(
+                randonneur=self,
+                year=ano_logro,
+                kind=Achievement.Type.SR10
+            )
+            if total_rutas >= 20:
+                Achievement.objects.get_or_create(
+                    randonneur=self,
+                    year=ano_logro,
+                    kind=Achievement.Type.SR20
+                )
+            if total_rutas >= 30:
+                Achievement.objects.get_or_create(
+                    randonneur=self,
+                    year=ano_logro,
+                    kind=Achievement.Type.SR30
+                )
+
 
     def obtener_logros_agrupados(self):
         """
@@ -321,6 +357,70 @@ class Randonneur(TimeStampedModel):
         resultado_formateado = {}
         for tipo, anos in agrupados.items():
             resultado_formateado[tipo] = f"({len(anos)}: {', '.join(anos)})"
+
+        return resultado_formateado
+
+
+    def calcular_progreso_super_randonneur(self, ano):
+        """
+        Calcula de forma dinamica que distancias de la serie obligatoria
+        de Super Randonneur (200, 300, 400, 600) ha completado el ciclista
+        en el ano provisto, indicando cuales le faltan y el porcentaje de progreso.
+        """
+        # El sistema busca las distancias unicas completadas con exito en el ano de referencia
+        # Se utiliza 'FIN' de forma directa para evitar conflictos de orden de definicion de clases
+        completadas = set(self.results.filter(
+            event__year=ano,
+            status='FIN'
+        ).values_list('event__distance_km', flat=True))
+
+        serie_obligatoria = {200, 300, 400, 600}
+
+        # Interseccion de conjuntos para obtener las completadas que forman parte de la serie
+        completadas_serie = serie_obligatoria.intersection(completadas)
+
+        # Diferencia de conjuntos para saber cuales faltan por completar
+        faltantes_serie = serie_obligatoria - completadas_serie
+
+        # Calculo de porcentaje de progreso (sobre 4 pruebas obligatorias)
+        porcentaje = int((len(completadas_serie) / 4) * 100)
+
+        return {
+            'completadas': sorted(list(completadas_serie)),
+            'faltantes': sorted(list(faltantes_serie)),
+            'porcentaje': porcentaje,
+            'completado_total': porcentaje == 100
+        }
+
+        # core/models.py -> dentro de la clase Randonneur
+
+    def obtener_sr600_completadas_agrupadas(self):
+        """
+        Recupera todos los resultados de tipo SR600 finalizados por el ciclista
+        y los agrupa por ruta permanente, devolviendo el total de veces completadas
+        y la lista de anos en formato legible: 'Ruta (Pais) - Cantidad (Anos)'.
+        """
+        # El sistema filtra los resultados exitosos de tipo SR600 ordenados cronologicamente
+        resultados_sr = self.results.filter(
+            event__event_type='SR600',
+            status='FIN'
+        ).order_by('event__start_date')
+
+        agrupados = {}
+        for r in resultados_sr:
+            # Se utiliza el nombre del evento y su pais como clave de agrupacion
+            nombre_ruta = r.event.name
+            pais = str(r.event.country)
+            clave = f"{nombre_ruta} ({pais})"
+
+            if clave not in agrupados:
+                agrupados[clave] = []
+            agrupados[clave].append(str(r.event.year))
+
+        # Se formatea el diccionario resultante para renderizarlo directamente en la plantilla
+        resultado_formateado = {}
+        for clave, anos in agrupados.items():
+            resultado_formateado[clave] = f" - {len(anos)} ({', '.join(anos)})"
 
         return resultado_formateado
 
@@ -532,6 +632,10 @@ class Achievement(TimeStampedModel):
         R10000 = 'R10000', 'Randonneur 10000'
         PBP = 'PBP', 'PBP Finisher'
         LEPERTEL = 'LEPERTEL', 'Challenge Lepertel (LRM)'
+        #retos super randonees sr600
+        SR10 = 'SR10', '10x Super Randonnee Challenge'
+        SR20 = 'SR20', '20x Super Randonnee Challenge'
+        SR30 = 'SR30', '30x Super Randonnee Challenge'
 
 
     randonneur = models.ForeignKey(Randonneur, on_delete=models.CASCADE, related_name='achievements')
