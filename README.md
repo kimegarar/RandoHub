@@ -1,120 +1,118 @@
-# RandoHub 🚴‍♂️
+# RandoHub: Portal Global para el Ciclismo Randonneur
 
-> Plataforma global, neutral y no oficial de agregación y visualización de datos del ciclismo Randonneur de ultra-distancia.
+> Plataforma neutral, no oficial y de código abierto para la agregación y visualización de datos del ciclismo Randonneur de ultra-distancia.
 
-**RandoHub** es un proyecto de Trabajo Fin de Máster (TFM) diseñado para resolver la fragmentación histórica de los datos en el ciclismo de larga distancia no competitivo (*brevets*, *permanentes*, *flechas* y grandes eventos). La plataforma funciona como un archivo histórico público y neutral que unifica los resultados históricos dispersos en múltiples formatos, respetando la autoridad de las entidades oficiales (como el Audax Club Parisien y Les Randonneurs Mondiaux) y aplicando principios de protección de datos personales.
+**RandoHub** es un proyecto de Trabajo Fin de Máster (TFM) que nace para solucionar la fragmentación histórica de los datos en el ciclismo de larga distancia no competitivo. La plataforma funciona como un archivo histórico público que centraliza los resultados y palmarés de ciclistas, a menudo dispersos en múltiples formatos y fuentes, respetando siempre la autoridad de las entidades oficiales como el Audax Club Parisien (ACP) y Les Randonneurs Mondiaux (LRM).
 
----
-
-## ✨ Características Principales (Fases A, B y C)
-
-### 1. Ingesta de Datos Core y MVP Nacional (Fase A)
-- **Directorio de Clubes Reales**: Base de datos unificada con 202 clubes oficiales de España indexados por códigos ACP.
-- **Calendario de Eventos Dinámico**: Visualización estructurada de pruebas deportivas (*Brevets* BRM, LRM, Flechas y Super Randonnées).
-- **Cálculo de Reconocimientos (Motor Inteligente)**: Algoritmo en memoria que calcula automáticamente la elegibilidad de un ciclista para el reconocimiento anual de *Super Randonneur (SR)* basándose en la serie completada en un año natural `{200, 300, 400, 600}`.
-- **Blindaje e Integridad de Datos (Data Armor)**: 
-  - Cálculo automático de estatus (*Finisher* vs *Over Time*) según la normativa de tiempos límites oficiales de la ACP.
-  - Validación y unicidad de códigos de homologación oficiales para evitar duplicidades accidentales.
-  - Flexibilidad para ultra-distancias mediante un sistema de sobrescritura dinámica de límites de tiempo (`max_time_override`).
-
-### 2. Identidad, Cuentas y Privacidad GDPR (Fase B)
-- **Desacoplamiento de Identidad**: Separación arquitectónica estricta entre la cuenta técnica del usuario (`User` de Django) y el perfil público e histórico del ciclista (`Randonneur`).
-- **Niveles de Privacidad (Privacy by Design)**: Tres niveles de visibilidad (`Público`, `Comunidad` y `Privado`) blindados activamente a nivel de backend en las vistas de detalle.
-- **Flujo de Reclamación Voluntaria (Claiming Flow)**: Mecanismo seguro para que un usuario se asocie a su historial randonneur real existente mediante el consentimiento explícito.
-- **Sistema de Solicitud de Fusión (Merge Requests)**: Permite que los ciclistas registrados propongan fusiones de perfiles duplicados. El administrador aprueba y ejecuta la fusión con un solo clic desde el panel Django Admin.
-
-### 3. Automatización, Deduplicación e Ingesta de SR600 (Fase C)
-- **Ingesta de Hojas de Cálculo Dinámica**: Comando de importación multilingüe que lee desde archivos locales o convierte URLs públicas de Google Sheets directamente a formato CSV para su análisis relacional.
-- **Motor de Resolución de Entidades (Deduplicación)**: Script automático que limpia caracteres corruptos por problemas de decodificación tipográfica (como `"la“pez"` a `"lopez"`), normaliza nombres y los compara mediante conjuntos de palabras (*Token Set Matching*), obviando el orden de nombre/apellidos.
-- **Calculador de Progreso en Tiempo Real**: Módulo visual que indica al ciclista en su perfil qué pruebas de la serie SR tiene completadas y cuáles le faltan exactamente para obtener el título en el año en curso.
-- **Reconocimiento SR10, SR20 y SR30**: Algoritmos de sincronización de logros acumulativos basados en la realización de múltiples rutas SR600 permanentes distintas.
+[![Estado del Proyecto](https://img.shields.io/badge/estado-TFM%20(Versi%C3%B3n%201.0)-brightgreen)](https://github.com/kimegarar/RandoHub)
 
 ---
 
-## 🛠️ Stack Tecnológico
+## Objetivos del Proyecto
 
-- **Lenguaje**: Python 3.12+
-- **Framework Backend**: Django 6.0.2 (Arquitectura MTV - Model-Template-View)
-- **Base de Datos**: SQLite (Desarrollo local) / Diseñado para PostgreSQL (Producción)
-- **Estilos / Frontend**: HTML5 semántico y Pico.css (Framework minimalista y accesible)
-- **Control de Versiones**: Git y GitHub
+-   **Centralización de Datos:** Unificar resultados de múltiples fuentes (webs nacionales, hojas de cálculo de retos) en una única base de datos relacional y estandarizada.
+-   **Preservación del Historial:** Crear un palmarés consolidado para cada ciclista, resolviendo duplicidades mediante un pipeline de deduplicación de entidades.
+-   **Comunidad y Privacidad (GDPR):** Ofrecer a los usuarios la capacidad de registrarse, reclamar sus perfiles históricos y gestionar su nivel de privacidad desde el diseño.
+-   **Herramientas de Análisis:** Proveer funcionalidades de valor añadido, como el cálculo dinámico del progreso para la obtención de reconocimientos anuales e históricos.
 
 ---
 
-## 🚀 Guía de Instalación y Despliegue Local
+## Características y Motores Implementados
 
-Sigue estos sencillos pasos para clonar el repositorio, configurar el entorno y arrancar el servidor de desarrollo en tu ordenador local:
+El proyecto se ha desarrollado en fases incrementales, resultando en un conjunto de características robustas:
 
-### 1. Clonar el repositorio y acceder a él
-```bash
-git clone https://github.com/kimegarar/RandoHub.git
-cd RandoHub
+#### Fase A: MVP Nacional e Ingesta Core
+-   **Directorio de Clubes Reales**: Base de datos unificada con 202 clubes oficiales de España indexados por códigos ACP.
+-   **Blindaje e Integridad de Datos (Motor "Data Armor")**:
+    -   Cálculo automático de estatus (*Finisher* vs *Over Time*) según la normativa de tiempos límites oficiales de ACP/LRM en el método `Result.save()`.
+    -   Flexibilidad para ultra-distancias mediante un sistema de sobrescritura de límites de tiempo (`max_time_override`).
 
-### 2. Crear y activar el entorno virtual
+#### Fase B: Identidad, Cuentas y Privacidad GDPR
+-   **Desacoplamiento de Identidad**: Separación arquitectónica entre la cuenta de usuario (`User`) y el perfil histórico del ciclista (`Randonneur`).
+-   **Niveles de Privacidad por Diseño**: Tres niveles (`Público`, `Comunidad`, `Privado`) blindados a nivel de backend en las vistas.
+-   **Flujo de Reclamación Voluntaria (Claiming Flow)**: Mecanismo seguro para que un usuario se asocie a su historial randonneur mediante consentimiento explícito.
+-   **Sistema de Solicitud de Fusión (Merge Requests)**: Permite que la comunidad proponga fusiones de perfiles duplicados para revisión y ejecución por parte de un administrador.
 
-En macOS y Linux:
-code Bash
+#### Fase C: Automatización y Sincronización Avanzada
+-   **Ingesta de Hojas de Cálculo Dinámica**: Comando de importación que procesa datos desde archivos locales o URLs de Google Sheets.
+-   **Motor de Resolución de Entidades (Deduplicación)**: Script que limpia caracteres corruptos, normaliza nombres y los compara mediante conjuntos de tokens (*Token Set Matching*), resolviendo el 95% de las duplicidades.
+-   **Calculador de Progreso en Tiempo Real**: Módulo visual que indica al ciclista en su perfil qué pruebas le faltan para obtener el título "Super Randonneur" en el año en curso.
+-   **Sincronización de Logros**: Algoritmos que calculan y otorgan automáticamente reconocimientos acumulativos como los retos "10x, 20x, 30x SR Challenge".
 
-python3 -m venv .venv
-source .venv/bin/activate
+---
 
-En Windows:
-code Bash
+## Arquitectura y Patrones de Diseño
 
-python -m venv .venv
-.venv\Scripts\activate
+-   **Patrón MTV (Model-Template-View):** Se sigue la arquitectura de Django con un desacoplamiento estricto de responsabilidades. La lógica de negocio y la integridad de los datos residen en el **Modelo**; la orquestación del flujo de datos en la **Vista**; y la presentación en las **Plantillas**.
+-   **Modelo Relacional Normalizado (3FN):** El dominio está estructurado para erradicar redundancias e inconsistencias, asegurando la integridad referencial durante la ingesta de datos masivos.
+-   **Principio DRY (Don't Repeat Yourself):** Se utiliza el patrón `TimeStampedModel` (una clase base abstracta) para la auditoría de marcas temporales, evitando la duplicidad de código en múltiples modelos.
 
-### 3. Instalar las dependencias del proyecto
-code Bash
+---
 
-pip install --upgrade pip
-pip install -r requirements.txt
+## Stack Tecnológico
 
-### 4. Ejecutar las migraciones de la base de datos
+| Componente      | Tecnología Utilizada                                     | Justificación                                                                                                                               |
+| --------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Backend**     | [Python 3.12](https://www.python.org/)                   | Ecosistema maduro para desarrollo web, sintaxis clara y amplia disponibilidad de librerías.                                                   |
+| **Framework**   | [Django 6.1](https://www.djangoproject.com/)              | Filosofía "baterías incluidas", ORM potente que abstrae la base de datos, y robustas medidas de seguridad integradas.                     |
+| **Base de Datos** | [PostgreSQL](https://www.postgresql.org/)                | Se migró de SQLite (prototipado) a PostgreSQL por ser un motor de producción robusto, transaccional (ACID) y el estándar para Django. |
+| **Frontend**    | HTML5, CSS3 (Plantillas de Django)                       | Se utilizó el sistema de plantillas nativo, priorizando la lógica de backend sobre un framework de frontend complejo (React/Vue).    |
+| **Dependencias**| `django-countries`, `python-decouple`, etc.              | Ver `requirements.txt` para el listado completo.                                                                                           |
+| **Entorno Dev** | PyCharm, venv, Git                                       | Herramientas estándar para un flujo de desarrollo profesional y control de versiones.                                                        |
 
-Este comando estructurará la base de datos local SQLite bajo la Tercera Forma Normal (3FN):
-code Bash
+---
 
-python manage.py makemigrations
-python manage.py migrate
+## Manual de Instalación Local
 
-5. Crear la cuenta de administrador (Superusuario)
-code Bash
+Sigue estos pasos para ejecutar el proyecto en un entorno de desarrollo:
 
-python manage.py createsuperuser
+1.  **Prerrequisitos:**
+    *   Python 3.12 o superior.
+    *   Git.
+    *   Un servidor de PostgreSQL instalado y en funcionamiento.
 
-6. Cargar y sembrar los datos (Seeding & Ingesta)
+2.  **Clonar el Repositorio:**
+    ```bash
+    git clone https://github.com/kimegarar/RandoHub.git
+    cd RandoHub
+    ```
 
-Ejecuta los comandos de gestión personalizados para poblar tu base de datos con los datos reales e históricos del portal:
-code Bash
+3.  **Crear y Activar Entorno Virtual:**
+    ```bash
+    # En macOS/Linux
+    python3 -m venv .venv
+    source .venv/bin/activate
 
-# Ingesta de clubes y ciclistas base
-python manage.py import_clubs
-python manage.py import_randonneurs
+    # En Windows
+    # python -m venv .venv
+    # .venv\Scripts\activate
+    ```
 
-# Ingesta masiva de resultados de internet (LRM)
-python manage.py scrape_lrm
+4.  **Instalar Dependencias:**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-# Ingesta de las rutas de las Super Randonnees permanentes
-python manage.py import_sr600_routes
+5.  **Configurar la Base de Datos y Secretos:**
+    *   Crea un usuario y una base de datos vacía en PostgreSQL.
+    *   Crea una copia del fichero `.env.example` y renómbrala a `.env`.
+    *   Rellena el fichero `.env` con tus credenciales de la base de datos y una `SECRET_KEY` (puedes generar una online).
 
-# Ingesta de los logros del reto 10x de las SR permanentes
-python manage.py import_sr_challenge_sheet
+6.  **Aplicar Migraciones:**
+    Este comando creará la estructura de tablas en tu base de datos PostgreSQL.
+    ```bash
+    python manage.py migrate
+    ```
 
-# Pipeline automatizado de resolucion de entidades (Deduplicacion)
-python manage.py deduplicate_randonneurs
+7.  **(Opcional) Cargar Datos de Muestra:**
+    El repositorio incluye un volcado de datos para poblar la base de datos.
+    ```bash
+    python manage.py loaddata datadump.json
+    ```
 
-7. Iniciar el servidor de desarrollo local
-code Bash
-
-python manage.py runserver
-
-Abre tu navegador web y accede a: http://127.0.0.1:8000/
-🏛️ Justificación Académica y Patrones de Diseño
-
-    Patrón MTV (Model-Template-View): Desacoplamiento estricto de responsabilidades. La persistencia e integridad lógica residen en el Modelo (models.py); la orquestación del flujo de datos en la Vista (views.py); y la presentación en las plantillas semánticas HTML5.
-
-    Modelo Normalizado (3FN): El dominio randonneur está estructurado en base a dependencias transitivas claras, erradicando los problemas de redundancia e inconsistencia durante la inserción de resultados masivos de internet.
-
-    TimeStampedModel: Implementación de una clase base abstracta (abstract = True) de auditoría de marcas temporales para evitar la duplicidad de código en la base de datos, respetando el principio DRY.
-
+8.  **Crear un Superusuario y Ejecutar:**
+    ```bash
+    python manage.py createsuperuser
+    python manage.py runserver
+    ```
+    La aplicación estará disponible en `http://127.0.0.1:8000/`.
