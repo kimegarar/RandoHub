@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/6.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
-
+from decouple import config
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,10 +20,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-!sqaihuj6+(yo=$vnzr=t&a_9)h8e(#ftj(8#31oyhh24)@(xk"
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+#!!!debug TRUE es un agujero de seguridad masivo. Si falla, Django muestra un error muy detallada con toda tu config, contraseñas, rutas de ficheros y mucha info interna
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = []
 
@@ -74,12 +75,25 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+# Activa la configuración de PostgreSQL, nueva bdd
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'randohub_db',
+        'USER': 'randohub_user',
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
+
+#la configuración de SQLite se queda desactivada al comentar
+#DATABASES = {
+ #   "default": {
+ #       "ENGINE": "django.db.backends.sqlite3",
+ #      "NAME": BASE_DIR / "db.sqlite3",
+ #   }
+#}
 
 
 # Password validation

@@ -441,7 +441,7 @@ class Event(TimeStampedModel):
     name = models.CharField(max_length=200, verbose_name=_("Event Name"))
     #Slug: versión "limpia" de url con nombre www.randoatlas.com/eventos/brevet-200-coruna-2024
     #título de algo convertido a un formato para la barra navegador (tod minus, espacios -, )
-    slug = models.SlugField(unique=True, help_text=_("URL friendly name, ej: madrid-gijon-2026"))
+    slug = models.SlugField(unique=True, max_length=255, help_text=_("URL friendly name, ej: madrid-gijon-2026"))
     event_type = models.CharField(max_length=10, choices=EventType.choices, default=EventType.BRM)
     # MODIFICACIÓN: Relación autorreferencial para unificar ediciones bajo una misma serie madre
     # Si es una edición (ej. LEL 1989), apunta al evento maestro (ej. London-Edinburgh-London)
@@ -579,7 +579,8 @@ class Result(TimeStampedModel):
 
     status = models.CharField(max_length=5, choices=Status.choices, default=Status.FINISHER)
     time = models.DurationField(null=True, blank=True, help_text="Tiempo total (HH:MM)")
-    homologation_code = models.CharField(max_length=50, blank=True, null=True, unique=True)
+    homologation_code = models.CharField(max_length=100, blank=True, null=True, unique=True)
+                                   #aumente de 50 a 100 al dar problema al pasar al postgresSQL
 
     class Meta:
         unique_together = ('randonneur', 'event')  # Un ciclista no puede tener 2 resultados en el mismo evento
